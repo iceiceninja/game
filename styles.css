@@ -1,0 +1,13 @@
+*{
+    padding: 0;
+    margin: 0;
+}
+canvas{
+    background: #eeee;
+    display: block;
+    margin: auto;
+    border: solid;
+}
+div{
+    margin: 0%;
+}
