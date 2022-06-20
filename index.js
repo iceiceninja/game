@@ -84,7 +84,6 @@ class Player{
     }
     set currentHealth(amount){
         this.health += amount;
-        document.getElementById("playerHealth").innerHTML = "Player Health: " + this.health
     }
     move(x , y){
         if(x > 0 && x < canvas.width){
@@ -128,6 +127,10 @@ class rangeBall
 let player1 = new Player(squareSize * 1.5,squareSize*1.5,squareSize/2,"#0095DD",100)
 let enemy1 = new Player(squareSize * 5.5,squareSize*5.5,squareSize/2, "#FF9999", 100)
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0)
+
+let units = []
+units.push(player1)
+units.push(enemy1)
 
 player1.currentHealth = 0
 
@@ -175,9 +178,15 @@ function draw()
     } 
     rangeDisp.center = [player1.center[0], player1.center[1]]
     rangeDisp.drawSelf()
-    player1.drawSelf()
-    enemy1.drawSelf()
-
+    if(player1.currentHealth > 0)
+    {
+        player1.drawSelf()
+    }
+    if(enemy1.currentHealth > 0)
+    {
+        enemy1.drawSelf()
+    }
+    document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth
 }
 
 function endPlayerTurn()
@@ -192,21 +201,24 @@ function endEnemyTurn()
     isPlayerTurn = true
     playerTurn()
 }
-function getDistance(x1,x2,y1,y2){
+function getDistance(x1,x2,y1,y2)
+{
     return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2))
 }
-function pushPop(array, pushElement){
+function pushPop(array, pushElement)
+{
     array.pop()
     array.push(pushElement)
 }
-//Turns for now take place in a while loop
 let turnNum = 0
 
 playerTurn()
 function playerTurn()
 {
+    turnNum += 1
     canTakeActions = true
     document.getElementById('gameStatus').innerHTML = "Player Turn"
+    document.getElementById('turnNum').innerHTML = "Turn: " + turnNum
     //CODE (WAIT FOR ACTION)
     // endPlayerTurn()
     // endPlayerTurn() Once an action has taken place. Can use a point system and when
@@ -357,9 +369,16 @@ canvas.addEventListener("mousedown", function(e)
         {
             if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= laserPistolAction.relativeRange)
             {
-                alert("inRange")
+                for(let i = 0;i<units.length;i++)
+                {                
+                    if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
+                    {
+                        units[i].currentHealth = -10
+                    }
+                }
                 endPlayerTurn()
-            }else
+            }
+            else
             {
                 alert("notINrange")
             }
