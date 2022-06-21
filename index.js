@@ -70,12 +70,13 @@ class mapTile{
     }
 }
 class Player{
-    constructor(x,y,rad, color, health){
+    constructor(x,y,rad, color, health, alive){
         this.x = x;
         this.y = y;
         this.rad = rad;
         this.color = color
         this.health = health
+        this.alive = alive
     }
     drawSelf(){
         drawBall(this.x,this.y,this.rad, this.color)
@@ -85,6 +86,18 @@ class Player{
     }
     set currentHealth(amount){
         this.health += amount;
+        if(this.health <= 0)
+        {
+            this.alive = false
+        }
+    }
+    get isAlive()
+    {
+        return this.alive
+    }
+    set isAlive(bool)
+    {
+        this.alive = bool
     }
     move(x , y){
         if(x > 0 && x < canvas.width){
@@ -125,8 +138,8 @@ class rangeBall
     }
 }
 
-let player1 = new Player(squareSize * 1.5,squareSize*1.5,squareSize/2,"#0095DD",100)
-let enemy1 = new Player(squareSize * 5.5,squareSize*5.5,squareSize/2, "#FF9999", 100)
+let player1 = new Player(squareSize * 1.5,squareSize*1.5,squareSize/2,"#0095DD",100, true)
+let enemy1 = new Player(squareSize * 5.5,squareSize*5.5,squareSize/2, "#FF9999", 100, true)
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0)
 
 let units = []
@@ -217,57 +230,61 @@ let turnNum = 0
 playerTurn()
 function playerTurn()
 {
-    turnNum += 1
-    canTakeActions = true
-    document.getElementById('gameStatus').innerHTML = "Player Turn"
-    document.getElementById('turnNum').innerHTML = "Turn: " + turnNum
-    //CODE (WAIT FOR ACTION)
-    // endPlayerTurn()
-    // endPlayerTurn() Once an action has taken place. Can use a point system and when
-    // max points are reached then pass turn
-    // canTakeActions = false
+    if(player1.isAlive){
+        turnNum += 1
+        canTakeActions = true
+        document.getElementById('gameStatus').innerHTML = "Player Turn"
+        document.getElementById('turnNum').innerHTML = "Turn: " + turnNum
+        //CODE (WAIT FOR ACTION)
+        // endPlayerTurn()
+        // endPlayerTurn() Once an action has taken place. Can use a point system and when
+        // max points are reached then pass turn
+        // canTakeActions = false
+    }
 }
 
 function enemyTurn()
 {
-    canTakeActions = false
-    
-    document.getElementById('gameStatus').innerHTML = "Enemy Turn"
-    
-    let currentSquare = findCurrentSquare(enemy1.center[0],enemy1.center[1])
-    
-    let movex = 0
-    let movey = 0
-    
-    let differencex = (player1.center[0]-enemy1.center[0])
-    let differencey = (player1.center[1]-enemy1.center[1])
-    
-    let offset = squareSize * 2.5
-    // let offsety = squareSize * 2.5
-    
-    if(getDistance(enemy1.center[0], player1.center[0],enemy1.center[1], 
-        player1.center[1]) <= squareSize * 3.5)
-    {
-        player1.currentHealth = -15
-    }
-    else{
-        if(player1.center[0] != enemy1.center[0] && offset < Math.abs(differencex))
-        {
-            movex = differencex/Math.abs(differencex)
-            // alert("movex: " + movex)
-        }
-        if(player1.center[1] != enemy1.center[1] && offset < Math.abs(differencey))
-        {
-            movey = differencey/Math.abs(differencey)
-            // alert("movey: " + movey)
-        }
-        enemy1.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
-            mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+    if(enemy1.isAlive){
+        canTakeActions = false
         
-        //Get player current square in MapTIles coordinates
-        // The line between player and enemy will always go through the square that the 
-        //enemy should choose to walk though
-        // Make an offset so that if the enemy is ranged he doesnt walk too close
+        document.getElementById('gameStatus').innerHTML = "Enemy Turn"
+        
+        let currentSquare = findCurrentSquare(enemy1.center[0],enemy1.center[1])
+        
+        let movex = 0
+        let movey = 0
+        
+        let differencex = (player1.center[0]-enemy1.center[0])
+        let differencey = (player1.center[1]-enemy1.center[1])
+        
+        let offset = squareSize * 2.5
+        // let offsety = squareSize * 2.5
+        
+        if(getDistance(enemy1.center[0], player1.center[0],enemy1.center[1], 
+            player1.center[1]) <= squareSize * 3.5)
+        {
+            player1.currentHealth = -15
+        }
+        else{
+            if(player1.center[0] != enemy1.center[0] && offset < Math.abs(differencex))
+            {
+                movex = differencex/Math.abs(differencex)
+                // alert("movex: " + movex)
+            }
+            if(player1.center[1] != enemy1.center[1] && offset < Math.abs(differencey))
+            {
+                movey = differencey/Math.abs(differencey)
+                // alert("movey: " + movey)
+            }
+            enemy1.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
+                mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+            
+            //Get player current square in MapTIles coordinates
+            // The line between player and enemy will always go through the square that the 
+            //enemy should choose to walk though
+            // Make an offset so that if the enemy is ranged he doesnt walk too close
+        }
     }
     endEnemyTurn()
 }
@@ -422,7 +439,7 @@ canvas.addEventListener("mousedown", function(e)
                     {                
                         if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
                         {
-                            units[i].currentHealth = -10
+                            units[i].currentHealth = -20
                         }
                     }
                     endPlayerTurn()
@@ -455,13 +472,10 @@ You can even access the action class and take the range for the action as input 
 Translocation such as
 Translocation(actionArray[i].range) or something like that
 
-
-ALSO TODO:
-Implement Turn System. You need to work on making it where you can keep track of turns and
-each action you take costs a turn (or partt of a turn if you wanna get fancy)
-That way you can also implement an enemy that moves when your turn is over
-
-
+ALSO: 
+-Work on a shop where you buy actions
+-Work on making credits useful
+-Work on making more actions
 */
 ////////////////////////////////////////////////////
 
