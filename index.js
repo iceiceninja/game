@@ -191,7 +191,7 @@ function draw()
 
 function endPlayerTurn()
 {
-    canMove = false
+    //canMove = false
     canTakeActions = false
     isPlayerTurn = false
     enemyTurn()
@@ -231,9 +231,29 @@ function enemyTurn()
     canTakeActions = false
     document.getElementById('gameStatus').innerHTML = "Enemy Turn"
     let currentSquare = findCurrentSquare(enemy1.center[0],enemy1.center[1])
-    enemy1.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0],
-        mapTiles[currentSquare[0]][currentSquare[1]].center[1] + squareSize)
+    let movex = 0
+    let movey = 0
+    let differencex = (player1.center[0]-enemy1.center[0])
+    let differencey = (player1.center[1]-enemy1.center[1])
+    let offsetx = squareSize * 2.5
+    let offsety = squareSize * 2.5
+    if(player1.center[0] != enemy1.center[0] && offsetx < Math.abs(differencex))
+    {
+        movex = differencex/Math.abs(differencex)
+        // alert("movex: " + movex)
+    }
+    if(player1.center[1] != enemy1.center[1] && offsety < Math.abs(differencey))
+    {
+        movey = differencey/Math.abs(differencey)
+        // alert("movey: " + movey)
+    }
+    enemy1.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
+        mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
     
+    //Get player current square in MapTIles coordinates
+    // The line between player and enemy will always go through the square that the 
+    //enemy should choose to walk though
+    // Make an offset so that if the enemy is ranged he doesnt walk too close
     endEnemyTurn()
 }
 
@@ -351,39 +371,40 @@ function mousePos(e)
     }
 canvas.addEventListener("mousedown", function(e)
     {
-        targetTile = mousePos(e)
-        // alert(targetTile)
-        if(canMove == true)
-        {
-            if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= moveAction.relativeRange)
+        if(canTakeActions == true){
+            targetTile = mousePos(e)
+            // alert(targetTile)
+            if(canMove == true)
             {
-                player1.move(targetTile[0],targetTile[1])
-                endPlayerTurn()
-            }else
-            {
-                alert("notINrange")
-                // alert(moveAction.relativeRange)
-            }
-            // targetTile = mousePos(e)
-        }else if(laserPistol == true)
-        {
-            if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= laserPistolAction.relativeRange)
-            {
-                for(let i = 0;i<units.length;i++)
-                {                
-                    if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
-                    {
-                        units[i].currentHealth = -10
-                    }
+                if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= moveAction.relativeRange)
+                {
+                    player1.move(targetTile[0],targetTile[1])
+                    endPlayerTurn()
+                }else
+                {
+                    alert("notINrange")
+                    // alert(moveAction.relativeRange)
                 }
-                endPlayerTurn()
-            }
-            else
+                // targetTile = mousePos(e)
+            }else if(laserPistol == true)
             {
-                alert("notINrange")
+                if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= laserPistolAction.relativeRange)
+                {
+                    for(let i = 0;i<units.length;i++)
+                    {                
+                        if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
+                        {
+                            units[i].currentHealth = -10
+                        }
+                    }
+                    endPlayerTurn()
+                }
+                else
+                {
+                    alert("notINrange")
+                }
             }
         }
-    
     });
 
 
