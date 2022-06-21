@@ -10,4 +10,13 @@ canvas{
 }
 div{
     margin: 0%;
+    background-color:darkslategray;
+}
+#playerInfo{
+    color: white;
+}
+.column
+{
+    padding-left: 10%;
+    float: left;
 }

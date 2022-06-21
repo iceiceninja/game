@@ -7,6 +7,7 @@ let canTakeActions = false
 
 let laserPistol = false
 
+let credits = 0
 
 let squareSize = canvas.height/13
 
@@ -187,6 +188,7 @@ function draw()
         enemy1.drawSelf()
     }
     document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth
+    document.getElementById("credits").innerHTML = "Credits: " + credits
 }
 
 function endPlayerTurn()
@@ -240,21 +242,21 @@ function enemyTurn()
     let differencex = (player1.center[0]-enemy1.center[0])
     let differencey = (player1.center[1]-enemy1.center[1])
     
-    let offsetx = squareSize * 2.5
-    let offsety = squareSize * 2.5
+    let offset = squareSize * 2.5
+    // let offsety = squareSize * 2.5
     
     if(getDistance(enemy1.center[0], player1.center[0],enemy1.center[1], 
-        player1.center[1]) < squareSize * 3.5)
+        player1.center[1]) <= squareSize * 3.5)
     {
         player1.currentHealth = -15
     }
     else{
-        if(player1.center[0] != enemy1.center[0] && offsetx < Math.abs(differencex))
+        if(player1.center[0] != enemy1.center[0] && offset < Math.abs(differencex))
         {
             movex = differencex/Math.abs(differencex)
             // alert("movex: " + movex)
         }
-        if(player1.center[1] != enemy1.center[1] && offsety < Math.abs(differencey))
+        if(player1.center[1] != enemy1.center[1] && offset < Math.abs(differencey))
         {
             movey = differencey/Math.abs(differencey)
             // alert("movey: " + movey)
@@ -471,10 +473,10 @@ That way you can also implement an enemy that moves when your turn is over
 
 
 function highlight(element){
-    if (element.style.background == 'rgb(0, 255, 0)'){
+    if (element.style.background == 'rgb(126, 189, 194)'){
         element.style.background = 'transparent'
     }else{
-        element.style.background = 'rgb(0, 255, 0)' 
+        element.style.background = 'rgb(126, 189, 194)' 
     }
 }
 function unHighlight(element){
