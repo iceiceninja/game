@@ -29,12 +29,12 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 
-function drawRect(x,y,width,height){
+function drawRect(x,y,width,height, stroke, fill){
     ctx.beginPath();
     ctx.rect(x,y,width,height);
-    ctx.strokeStyle = "#000000"
+    ctx.strokeStyle = stroke//"#000000"
     ctx.stroke();
-    ctx.fillStyle = "#FFFFFF";
+    ctx.fillStyle = fill//"#FFFFFF";
     ctx.fill();
     ctx.closePath();
 }
@@ -55,7 +55,7 @@ class mapTile{
         this.tileNum = tileNum;
     }
     drawSelf() {
-        drawRect(this.x,this.y,this.width,this.height);    
+        drawRect(this.x,this.y,this.width,this.height,"#000000","#FFFFFF");    
     }
     get center(){
         return [(this.x + this.width/2),(this.y + this.height/2)]
@@ -350,6 +350,18 @@ addAction("Plasma Beam",false,1,10)
 addAction("EMP Grenade",false,1,10)
 addAction("Laser Vision", false, 1, 10)
 
+
+// x and y represent the center of the effect
+function fireEffect(x,y, duration)
+{
+    let interval = setInterval(() =>{
+        ctx.clearRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2)
+        drawRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2,"#FFFFFF","#FF1111");}, 50);
+
+    setTimeout(function( ) { clearInterval( interval );}, duration);
+    
+}
+
 let laserPistolAction = searchAction("Laser Pistol")
 let moveAction = searchAction("Move")
 
@@ -371,6 +383,7 @@ function mousePos(e)
     }
 canvas.addEventListener("mousedown", function(e)
     {
+        fireEffect(mousePos(e)[0], mousePos(e)[1],50)
         if(canTakeActions == true){
             targetTile = mousePos(e)
             // alert(targetTile)
@@ -388,6 +401,7 @@ canvas.addEventListener("mousedown", function(e)
                 // targetTile = mousePos(e)
             }else if(laserPistol == true)
             {
+                fireEffect(mousePos(e))
                 if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= laserPistolAction.relativeRange)
                 {
                     for(let i = 0;i<units.length;i++)
