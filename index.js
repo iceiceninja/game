@@ -334,6 +334,10 @@ class Action
 
 document.addEventListener("keyup", function(event) 
 {
+    if(event.key == "s"||event.key == "S")
+    {
+        openShop()
+    }
     if(canTakeActions == true)
     {
         actions = document.querySelectorAll(".action")
@@ -481,7 +485,18 @@ ALSO:
 
 
 
-
+function openShop()
+{
+    let shop = document.getElementById("shopMenu")
+    if(shop.style.zIndex < 10)
+    {
+        shop.style.zIndex = 10
+    }else
+    {
+        shop.style.zIndex = -1
+    }
+    
+}
 
 
 
