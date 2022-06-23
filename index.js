@@ -298,6 +298,7 @@ class Action
         this.charges = charges;
         this.range = range;
         this.price = price;
+        let actionNum = null
     }
     get selected()
     {
@@ -306,6 +307,10 @@ class Action
     get getName()
     {
         return this.name
+    }
+    get number()
+    {
+        return this.actionNum
     }
     set selected(active)
     {
@@ -325,8 +330,9 @@ class Action
     }
     obtained()
     {
-        let actionNum = document.getElementById('actionList').innerHTML.split('<div').length
-        document.getElementById('actionList').innerHTML += "<div id=\"" + actionNum + "\" class=\"action\"\">("+ actionNum + ") " + this.name + "</div>"
+        this.actionNum = document.getElementById('actionList').innerHTML.split('<div').length
+        document.getElementById('actionList').innerHTML += 
+        "<div id=\"" + this.actionNum + "\" class=\"action\"\">("+ this.actionNum + ") " + this.name + "</div>"
     }
 }
 
@@ -348,15 +354,22 @@ document.addEventListener("keyup", function(event)
             unHighlight(actions[i])
             actionArray[i].selected = false;
         }
-        if(event.key != 0)
+        for(let i = 0; i < actionArray.length; i++)
         {
-            let currentAction = actionArray[event.key-1]
-            currentAction.selected = true
-        }else
-        {
-            let currentAction = actionArray[event.key]
-            currentAction.selected = true
+            if(actionArray[i].number == event.key)
+            {
+                actionArray[i].selected = true
+            }
         }
+        // if(event.key != 0)
+        // {
+        //     let currentAction = actionArray[event.key-1]
+        //     currentAction.selected = true
+        // }else
+        // {
+        //     let currentAction = actionArray[event.key]
+        //     currentAction.selected = true
+        // }
         highlight(document.getElementById(event.key))
         for(let i = 0; i < actionArray.length; i++)
         {
@@ -375,7 +388,7 @@ document.addEventListener("keyup", function(event)
                         rangeDisp.range = laserPistolAction.relativeRange
                         break;
                     default:
-                        alert("Action Name not detected")
+                        alert("Action Name not detected: " + actionArray[i].name)
                 }
             }
         }
@@ -508,6 +521,16 @@ function purchase(name)
     {
         credits -= action.price
         action.obtained()
+        var list = document.getElementById("shop-list");
+        var allItems = document.querySelectorAll("#shop-list li");
+        for(let item = 0; item < allItems.length; item++)
+        {
+            if(action.name == String(allItems[item].innerHTML.split("<")[0]))
+            {
+                // console.log(allItems[item])
+                list.removeChild(allItems[item])
+            }
+        }
     }
 }
 
@@ -535,7 +558,6 @@ function addAction(name, active, charges, range, price)
 {
     let newAction = new Action(name,active,charges,range,price)
     // newAction.obtained();
-    console.log(newAction.price)
     actionArray.push(newAction)
     addToShop(newAction, price)
 
