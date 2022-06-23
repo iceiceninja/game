@@ -7,7 +7,7 @@ let canTakeActions = false
 
 let laserPistol = false
 
-let credits = 0
+let credits = 100
 
 let squareSize = canvas.height/13
 
@@ -291,12 +291,13 @@ function enemyTurn()
 
 class Action
 {
-    constructor(name, active, charges, range)
+    constructor(name, active, charges, range, price)
     {
         this.name = name;
         this.active = active;
         this.charges = charges;
         this.range = range;
+        this.price = price;
     }
     get selected()
     {
@@ -380,13 +381,14 @@ document.addEventListener("keyup", function(event)
         }
     }
 });
-addAction("Move",false,100,1.5)
-addAction("Laser Pistol",false,1,10)
-addAction("Plasma Beam",false,1,10)
-addAction("EMP Grenade",false,1,10)
-addAction("Laser Vision", false, 1, 10)
+addAction("Move",false,100,1.5,0)
+addAction("Laser Pistol",false,1,10, 10)
+addAction("Plasma Beam",false,1,10, 30)
+addAction("EMP Grenade",false,1,10, 50)
+addAction("Laser Vision", false, 1, 10, 100)
 
-
+searchAction("Move").obtained()
+searchAction("Laser Pistol").obtained()
 // x and y represent the center of the effect
 function fireEffect(x,y, duration)
 {
@@ -498,8 +500,26 @@ function openShop()
     
 }
 
+function purchase(name)
+{
+    
+    let action =  searchAction(name)
+    if(action.price <= credits)
+    {
+        credits -= action.price
+        action.obtained()
+    }
+}
 
+function addToShop(action, price)
+{
+    document.getElementById("shop-list").innerHTML += 
+    "<li>" + action.name + "<button type=\"button\" onclick=\"purchase(\'" + action.name +"\')\"> $" + price + " </button> </li>"
+}
 
+// for(let i = 0; i<actionArray.length;i++){
+//     addToShop(actionArray[i], "100")
+// }
 
 function highlight(element){
     if (element.style.background == 'rgb(126, 189, 194)'){
@@ -511,11 +531,14 @@ function highlight(element){
 function unHighlight(element){
         element.style.background = 'transparent'
 }
-function addAction(name, active, charges, range)
+function addAction(name, active, charges, range, price)
 {
-    let newAction = new Action(name,active,charges,range)
-    newAction.obtained();
+    let newAction = new Action(name,active,charges,range,price)
+    // newAction.obtained();
+    console.log(newAction.price)
     actionArray.push(newAction)
+    addToShop(newAction, price)
+
 }
 function searchAction(name)
 {

@@ -87,3 +87,7 @@ button:hover
     background-color: #7EBDC2;
     color: white;
 }
+ul
+{
+    list-style: none;
+}
