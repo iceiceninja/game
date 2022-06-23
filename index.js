@@ -26,6 +26,7 @@ let isPlayerTurn = true
 let actionArray = []
 
 
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -359,119 +360,150 @@ document.addEventListener("keyup", function(event)
             if(actionArray[i].number == event.key)
             {
                 actionArray[i].selected = true
-            }
-        }
-        // if(event.key != 0)
-        // {
-        //     let currentAction = actionArray[event.key-1]
-        //     currentAction.selected = true
-        // }else
-        // {
-        //     let currentAction = actionArray[event.key]
-        //     currentAction.selected = true
-        // }
-        highlight(document.getElementById(event.key))
-        for(let i = 0; i < actionArray.length; i++)
-        {
-            if(actionArray[i].selected == true)
-            {
                 switch (actionArray[i].name)
                 {
                     case "Move":
-                        canMove = true;
-                        laserPistol = false
                         rangeDisp.range = moveAction.relativeRange
                         break;
                     case "Laser Pistol":
-                        laserPistol = true
-                        canMove = false
                         rangeDisp.range = laserPistolAction.relativeRange
+                        break;
+                    case "Plasma Beam":
+                        rangeDisp.range = searchAction("Plasma Beam").relativeRange
                         break;
                     default:
                         alert("Action Name not detected: " + actionArray[i].name)
                 }
             }
         }
+        highlight(document.getElementById(event.key))
     }
 });
+
+// Have a JSON file with a dictionary of the names of actions and their functions?
+
 addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
-addAction("Plasma Beam",false,1,10, 30)
+addAction("Plasma Beam",false,1,15, 30)
 addAction("EMP Grenade",false,1,10, 50)
 addAction("Laser Vision", false, 1, 10, 100)
 
-searchAction("Move").obtained()
-searchAction("Laser Pistol").obtained()
+let laserPistolAction = searchAction("Laser Pistol")
+let moveAction = searchAction("Move")
+let plasmaBeamAction = searchAction("Plasma Beam")
+
+moveAction.obtained()
+laserPistolAction.obtained()
+
 // x and y represent the center of the effect
-function fireEffect(x,y, duration)
+function fireEffect(x,y, duration, fill)
 {
     let interval = setInterval(() =>{
         ctx.clearRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2)
-        drawRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2,"#FFFFFF","#FF1111");}, 50);
+        drawRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2,"#FFFFFF",fill);}, 50);
 
     setTimeout(function( ) { clearInterval( interval );}, duration);
     
 }
 
-let laserPistolAction = searchAction("Laser Pistol")
-let moveAction = searchAction("Move")
+
 
 function findCurrentSquare(x,y)
-    {
-        col = Math.floor(x/squareSize)
-        row = Math.floor(y/squareSize)
-        // mapTiles[row][col]
-        return [row, col]
-    }
+{
+    col = Math.floor(x/squareSize)
+    row = Math.floor(y/squareSize)
+    return [row, col]
+}
 function mousePos(e)
     {
         let x = getMousePosition(canvas,e)[0];
         let y = getMousePosition(canvas,e)[1];
         col = Math.floor(x/squareSize)
         row = Math.floor(y/squareSize)
-        // console.log(col + " " + row)
         return mapTiles[row][col].center;
     }
-canvas.addEventListener("mousedown", function(e)
+
+    //replace this whole function with just the ability to return mouse pos (on click) to action functions
+    canvas.addEventListener("mousedown", function(e)
     {
         if(canTakeActions == true){
             targetTile = mousePos(e)
-            // alert(targetTile)
-            if(canMove == true)
+
+            for(let i = 0; i < actionArray.length; i++)
             {
-                if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= moveAction.relativeRange)
+                if(actionArray[i].selected == true)
                 {
-                    player1.move(targetTile[0],targetTile[1])
-                    endPlayerTurn()
-                }else
-                {
-                    alert("notINrange")
-                    // alert(moveAction.relativeRange)
-                }
-                // targetTile = mousePos(e)
-            }else if(laserPistol == true)
-            {
-                fireEffect(mousePos(e)[0], mousePos(e)[1],50)
-                if(getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= laserPistolAction.relativeRange)
-                {
-                    for(let i = 0;i<units.length;i++)
-                    {                
-                        if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
-                        {
-                            units[i].currentHealth = -20
-                        }
+                    switch (actionArray[i].name)
+                    {
+                        case "Move":
+                            move(targetTile)
+                            break;
+                        case "Laser Pistol":
+                            LP(targetTile)
+                            break;
+                        case "Plasma Beam":
+                            plasmaBeam(targetTile)
+                            break; 
+                        default:
+                            alert("Action Name not detected on click: " + actionArray[i].name)
                     }
-                    endPlayerTurn()
-                }
-                else
-                {
-                    alert("notINrange")
                 }
             }
         }
     });
 
 
+function withinRange(targetTile, action)
+{
+    return getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= action.relativeRange
+}
+function damageTile(targetTile, damage)
+{
+    for(let i = 0;i<units.length;i++)
+    {                
+        if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
+        {
+            units[i].currentHealth = -damage
+        }
+    }
+}
+function LP(targetTile)
+{
+    if(withinRange(targetTile, laserPistolAction))
+    {
+        fireEffect(targetTile[0],targetTile[1],150, "#FF1111")
+        damageTile(targetTile,20)
+        endPlayerTurn()
+    }
+    else
+    {
+        alert("notINrange")
+    }
+}
+function move(targetTile)
+{
+    if(withinRange(targetTile, moveAction))
+        {
+            player1.move(targetTile[0],targetTile[1])
+            endPlayerTurn()
+        }else
+        {
+            alert("notINrange")
+        }
+}
+function plasmaBeam(targetTile)
+{
+    if(withinRange(targetTile, plasmaBeamAction))
+    {
+        fireEffect(targetTile[0],targetTile[1],150, "#D5FF00")
+        damageTile(targetTile,30)
+        endPlayerTurn()
+    }
+    else
+    {
+        alert("notINrange")
+    }
+}
 
 ////////////////////////////////////////////////////
 /*
