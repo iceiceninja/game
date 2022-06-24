@@ -1,17 +1,15 @@
 var canvas = document.getElementById("myCanvas")
 var ctx = canvas.getContext("2d")
 
-
-let canMove = false;
 let canTakeActions = false
-
-let laserPistol = false
 
 let credits = 100
 
 let squareSize = canvas.height/13
 
-
+let units = []
+let enemies = []
+let allies = []
 
 let tick = 0
 let mapTiles = [];
@@ -20,7 +18,6 @@ let colLength = 0
 
 
 let isPlayerTurn = true
-// let isEnemyTurn = false
 
 
 let actionArray = []
@@ -43,7 +40,6 @@ function drawRect(x,y,width,height, stroke, fill){
 function drawBall(x,y,rad, color) {
     ctx.beginPath();
     ctx.arc(x, y, rad, 0, Math.PI*2); //x, y, radius, start angle, end angle
-    // ctx.fillStyle = "#0095DD";
     ctx.fillStyle = color;
     ctx.fill();
     ctx.closePath();
@@ -71,26 +67,51 @@ class mapTile{
     }
 }
 class Player{
-    constructor(x,y,rad, color, health, alive){
+    constructor(name,x,y, color, health, alive,effects,shield){
+        this.name = name
         this.x = x;
         this.y = y;
-        this.rad = rad;
+        // this.rad = rad;
+        this.rad = squareSize/2
         this.color = color
         this.health = health
         this.alive = alive
+        this.effects = effects
+        this.shield = shield
     }
     drawSelf(){
         drawBall(this.x,this.y,this.rad, this.color)
+    }
+    get getName()
+    {
+        return this.name
     }
     get currentHealth(){
         return this.health
     }
     set currentHealth(amount){
         this.health += amount;
+        // console.log(this.name + ":" + this.health)
         if(this.health <= 0)
         {
             this.alive = false
         }
+    }
+    get currentShield()
+    {
+        return this.shield
+    }
+    set currentShield(num)
+    {
+        this.shield += num
+    }
+    get currentEffects()
+    {
+        return this.effects
+    }
+    set currentEffects(effect)
+    {
+        this.effects.push(effect)
     }
     get isAlive()
     {
@@ -101,15 +122,24 @@ class Player{
         this.alive = bool
     }
     move(x , y){
-        if(x > 0 && x < canvas.width){
+        let validMove = true
+        for(let i = 0;i < units.length; i++)
+        {
+            if(units[i].center[0] == x && units[i].center[1] == y && units[i].isAlive == true)
+            {
+                console.log("collision avoided")
+                validMove = false
+            }
+        }
+        if(x > 0 && x < canvas.width && validMove){
             this.x = x;
         }else{
-            alert("Error:invalid X")
+            console.log("Error:invalid X")
         }
-        if(y > 0 && y < canvas.height){
+        if(y > 0 && y < canvas.height && validMove){
             this.y = y;
         }else{
-            alert("Error: Invalid Y")
+            console.log("Error: Invalid Y")
         }
     }
     get center(){
@@ -139,16 +169,26 @@ class rangeBall
     }
 }
 
-let player1 = new Player(squareSize * 1.5,squareSize*1.5,squareSize/2,"#0095DD",100, true)
-let enemy1 = new Player(squareSize * 5.5,squareSize*5.5,squareSize/2, "#FF9999", 100, true)
+let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#0095DD",100, true,[],0)
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0)
 
-let units = []
+makeEnemy("Enemy1",squareSize * 11.5,squareSize*15.5, "#FF9999", 10, true,[],0)
+makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
+// makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
+makeEnemy("Enemy3",squareSize * 7.5,squareSize*2.5, "#FF9999", 10, true,[],0)//"Enemy4",squareSize * 17.5,squareSize*1.5, "#FF9999", 10, true,[],0
+
 units.push(player1)
-units.push(enemy1)
+
+allies.push(player1)
 
 player1.currentHealth = 0
 
+function makeEnemy(name,x,y, color, health, alive,effects,shield)
+{
+    let newEnemy = new Player(name,x,y, color, health, alive,effects,shield)
+    units.push(newEnemy)
+    enemies.push(newEnemy)
+}
 
 function getMousePosition(canvas, event) {
     let rect = canvas.getBoundingClientRect();
@@ -197,17 +237,21 @@ function draw()
     {
         player1.drawSelf()
     }
-    if(enemy1.currentHealth > 0)
-    {
-        enemy1.drawSelf()
+    for(let i = 0; i < enemies.length; i++){
+        if(enemies[i].currentHealth > 0)
+        {
+            enemies[i].drawSelf()
+        }else
+        {
+            enemies[i].isAlive = false
+        }
     }
-    document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth
+    document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth + "<br>Player Shield: " + player1.currentShield
     document.getElementById("credits").innerHTML = "Credits: " + credits
 }
 
 function endPlayerTurn()
 {
-    //canMove = false
     canTakeActions = false
     isPlayerTurn = false
     enemyTurn()
@@ -246,45 +290,47 @@ function playerTurn()
 
 function enemyTurn()
 {
-    if(enemy1.isAlive){
-        canTakeActions = false
-        
-        document.getElementById('gameStatus').innerHTML = "Enemy Turn"
-        
-        let currentSquare = findCurrentSquare(enemy1.center[0],enemy1.center[1])
-        
-        let movex = 0
-        let movey = 0
-        
-        let differencex = (player1.center[0]-enemy1.center[0])
-        let differencey = (player1.center[1]-enemy1.center[1])
-        
-        let offset = squareSize * 2.5
-        // let offsety = squareSize * 2.5
-        
-        if(getDistance(enemy1.center[0], player1.center[0],enemy1.center[1], 
-            player1.center[1]) <= squareSize * 3.5)
-        {
-            player1.currentHealth = -15
-        }
-        else{
-            if(player1.center[0] != enemy1.center[0] && offset < Math.abs(differencex))
-            {
-                movex = differencex/Math.abs(differencex)
-                // alert("movex: " + movex)
-            }
-            if(player1.center[1] != enemy1.center[1] && offset < Math.abs(differencey))
-            {
-                movey = differencey/Math.abs(differencey)
-                // alert("movey: " + movey)
-            }
-            enemy1.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
-                mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+    for(let i = 0; i < enemies.length; i++){
+        let currentEnemy = enemies[i]
+        if(currentEnemy.isAlive){
+            canTakeActions = false
             
-            //Get player current square in MapTIles coordinates
-            // The line between player and enemy will always go through the square that the 
-            //enemy should choose to walk though
-            // Make an offset so that if the enemy is ranged he doesnt walk too close
+            document.getElementById('gameStatus').innerHTML = "Enemy Turn"
+            
+            let currentSquare = findCurrentSquare(currentEnemy.center[0],currentEnemy.center[1])
+            
+            let movex = 0
+            let movey = 0
+            
+            let differencex = (player1.center[0]-currentEnemy.center[0])
+            let differencey = (player1.center[1]-currentEnemy.center[1])
+            
+            let offset = squareSize * 2.5
+            
+            if(getDistance(currentEnemy.center[0], player1.center[0],currentEnemy.center[1], 
+                player1.center[1]) <= laserPistolAction.relativeRange)
+            {
+                LP(player1.center)
+            }
+            else{
+                if(player1.center[0] != currentEnemy.center[0] && offset < Math.abs(differencex))
+                {
+                    movex = differencex/Math.abs(differencex)
+                    // alert("movex: " + movex)
+                }
+                if(player1.center[1] != currentEnemy.center[1] && offset < Math.abs(differencey))
+                {
+                    movey = differencey/Math.abs(differencey)
+                    // alert("movey: " + movey)
+                }
+                currentEnemy.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
+                    mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+                
+                //Get player current square in MapTIles coordinates
+                // The line between player and enemy will always go through the square that the 
+                //enemy should choose to walk though
+                // Make an offset so that if the enemy is ranged he doesnt walk too close
+            }
         }
     }
     endEnemyTurn()
@@ -334,6 +380,16 @@ class Action
         this.actionNum = document.getElementById('actionList').innerHTML.split('<div').length
         document.getElementById('actionList').innerHTML += 
         "<div id=\"" + this.actionNum + "\" class=\"action\"\">("+ this.actionNum + ") " + this.name + "</div>"
+        
+        var list = document.getElementById("shop-list");
+        var allItems = document.querySelectorAll("#shop-list li");
+        for(let item = 0; item < allItems.length; item++)
+        {
+            if(this.name == String(allItems[item].innerHTML.split("<")[0]))
+            {
+                list.removeChild(allItems[item])
+            }
+        }
     }
 }
 
@@ -353,10 +409,10 @@ document.addEventListener("keyup", function(event)
         for(let i = 0; i < actions.length; i++)
         {
             unHighlight(actions[i])
-            actionArray[i].selected = false;
         }
         for(let i = 0; i < actionArray.length; i++)
         {
+            actionArray[i].selected = false;
             if(actionArray[i].number == event.key)
             {
                 actionArray[i].selected = true
@@ -369,7 +425,10 @@ document.addEventListener("keyup", function(event)
                         rangeDisp.range = laserPistolAction.relativeRange
                         break;
                     case "Plasma Beam":
-                        rangeDisp.range = searchAction("Plasma Beam").relativeRange
+                        rangeDisp.range = plasmaBeamAction.relativeRange
+                        break;
+                    case "Weak Shield":
+                        rangeDisp.range = weakShieldAction.relativeRange
                         break;
                     default:
                         alert("Action Name not detected: " + actionArray[i].name)
@@ -386,11 +445,12 @@ addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
 addAction("Plasma Beam",false,1,15, 30)
 addAction("EMP Grenade",false,1,10, 50)
-addAction("Laser Vision", false, 1, 10, 100)
+addAction("Weak Shield", false, 1, .75, 25)
 
 let laserPistolAction = searchAction("Laser Pistol")
 let moveAction = searchAction("Move")
 let plasmaBeamAction = searchAction("Plasma Beam")
+let weakShieldAction = searchAction("Weak Shield")
 
 moveAction.obtained()
 laserPistolAction.obtained()
@@ -428,7 +488,13 @@ function mousePos(e)
     {
         if(canTakeActions == true){
             targetTile = mousePos(e)
-
+            // for(let i = 0; i < units.length; i++)
+            // {
+            //     if(targetTile[0] == units[i].center[0] && targetTile[1] == units[i].center[1])
+            //     {
+            //         console.log(units[i].name + " has been clicked")
+            //     }
+            // }
             for(let i = 0; i < actionArray.length; i++)
             {
                 if(actionArray[i].selected == true)
@@ -444,6 +510,9 @@ function mousePos(e)
                         case "Plasma Beam":
                             plasmaBeam(targetTile)
                             break; 
+                        case "Weak Shield":
+                            weakShield(targetTile)
+                            break;
                         default:
                             alert("Action Name not detected on click: " + actionArray[i].name)
                     }
@@ -459,21 +528,46 @@ function withinRange(targetTile, action)
 }
 function damageTile(targetTile, damage)
 {
+    // console.log("Target: " + targetTile)
     for(let i = 0;i<units.length;i++)
     {                
-        if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
+        if(round(units[i].center[0],5) == round(targetTile[0],5) && round(units[i].center[1],5) == round(targetTile[1],5))
         {
-            units[i].currentHealth = -damage
+            if(units[i].currentShield > 0)
+            {
+                units[i].currentShield = -1
+            }
+            else
+            {
+                units[i].currentHealth = -damage
+                console.log(units[i].name + " just took " + damage + " damage")
+            }
         }
     }
+}
+function searchArray(array, searchName)
+{
+    for(let i = 0; i<array.length;i++){
+        if(array[i].name == searchName)
+        {
+            return array[i]
+            // damageTile(units[i].center,10)
+        }
+    }
+}
+function round(num,decimalPlace) {
+    const d = Math.pow(10, decimalPlace);
+    return Math.round((num + Number.EPSILON) * d) / d;
 }
 function LP(targetTile)
 {
     if(withinRange(targetTile, laserPistolAction))
     {
         fireEffect(targetTile[0],targetTile[1],150, "#FF1111")
-        damageTile(targetTile,20)
-        endPlayerTurn()
+        damageTile(targetTile,5)
+        if(canTakeActions == true){
+            endPlayerTurn()
+        }
     }
     else
     {
@@ -504,29 +598,58 @@ function plasmaBeam(targetTile)
         alert("notINrange")
     }
 }
-
+function weakShield(targetTile)
+{
+    if(withinRange(targetTile, weakShieldAction))
+    {
+        for(let i = 0;i<units.length;i++)
+        {                
+            if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
+            {
+                units[i].currentShield += 1
+            }
+        }
+        endPlayerTurn()
+    }else
+    {
+        alert("Not in range")
+    }
+}
 ////////////////////////////////////////////////////
 /*
+TO MAKE AN ACTION:
+1.Make the action using addAction function:
+EX: addAction("Laser Pistol",false,1,10, 10)
+             (name, active, charges, range, price)
 
+2. Make refrence to the actual action
+EX: let laserPistolAction = searchAction("Laser Pistol")
+
+3. Make all functionality for the action
+EX: The LP(targetTile) function
+
+4. Calculate rangeDisp when key is pressed and call function on click
+
+Your action should now appear for purchase in the shop and should be ready for use
+
+ACTION IDEAS:
+
+Summoning Actions: Build robot, call allies, hack (turns robot enemy to ally), Create mech
+Damage: (Diff dmg types: Thermal(laser), plasma(plasma), physical(bullets and knives), antiThermal (ice stuff)
+            , psionics, gravity),
+        frag grenade, Mag rifle (magnetic), Void carbine, spike thrower, Thunder gun, Suit ripper, stun baton
+Defence: Shields, create structures?, Different types of armor with different abilities (Combat armor,Speed armor, Storm armor)
+Movement: blink, teleport, phase(blink but through walls)
+Drugs: One time use status effect granting powerup, some with downsides
+Augments: Besides boosting the range/damage/capabilities of different types of weapons...
+            Xray vision (Dont need LOS), Personal shield generator, Deflector, Enchanced Legs, Neural Link (You choose one weapon to get super charged)
 
 TODO:
-Try adding action classes such as Translocation and Plasma or stuff like that.
-That way you can make it where you dont have to specify spesific functions for each 
-action, but instead you can say like Translocation(range) and now your normal move has
-Translocation(1)
-while a teleport could have
-Translocation(10)
-and a blink could have 
-Translocation(3)
-and you dont have to worry about coding each one
-You can even access the action class and take the range for the action as input for the 
-Translocation such as
-Translocation(actionArray[i].range) or something like that
-
-ALSO: 
--Work on a shop where you buy actions
--Work on making credits useful
 -Work on making more actions
+-Work on making it where you can 'build' ally robots (make it where when you create new players
+    you can designate as friendly or enemy)
+-Work on different attack shapes (such as a circle AOE attack, a cone attack, a beam/line attack, etc)
+-Adding passive skills/augments
 */
 ////////////////////////////////////////////////////
 
@@ -547,22 +670,11 @@ function openShop()
 
 function purchase(name)
 {
-    
     let action =  searchAction(name)
     if(action.price <= credits)
     {
         credits -= action.price
         action.obtained()
-        var list = document.getElementById("shop-list");
-        var allItems = document.querySelectorAll("#shop-list li");
-        for(let item = 0; item < allItems.length; item++)
-        {
-            if(action.name == String(allItems[item].innerHTML.split("<")[0]))
-            {
-                // console.log(allItems[item])
-                list.removeChild(allItems[item])
-            }
-        }
     }
 }
 
@@ -572,9 +684,7 @@ function addToShop(action, price)
     "<li>" + action.name + "<button type=\"button\" onclick=\"purchase(\'" + action.name +"\')\"> $" + price + " </button> </li>"
 }
 
-// for(let i = 0; i<actionArray.length;i++){
-//     addToShop(actionArray[i], "100")
-// }
+
 
 function highlight(element){
     if (element.style.background == 'rgb(126, 189, 194)'){
@@ -589,10 +699,8 @@ function unHighlight(element){
 function addAction(name, active, charges, range, price)
 {
     let newAction = new Action(name,active,charges,range,price)
-    // newAction.obtained();
     actionArray.push(newAction)
     addToShop(newAction, price)
-
 }
 function searchAction(name)
 {
