@@ -693,12 +693,21 @@ function thermalGrenade(targetTile)
             {
                 if(topLeftRow + currRow >= 0 && topLeftCol + currCol >= 0)
                 {
-                    fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
-                    damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+                    if(round(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]),6) <= round(thermalGrenadeAction.relativeAoe,6))
+                    {                   
+                        console.log(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]), thermalGrenadeAction.relativeAoe)
+                        fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
+                        damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+                    }
+                   
                 }
             }
         }
         
+    }
+    else
+    {
+        alert("Outta range")
     }
 }
 ////////////////////////////////////////////////////
