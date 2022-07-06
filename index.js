@@ -18,7 +18,7 @@ let colLength = 0
 
 let isPlayerTurn = true
 let isAoe = false
-
+let spawnBig = false
 
 let actionArray = []
 
@@ -199,6 +199,18 @@ makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
 // makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
 makeEnemy("Enemy3",squareSize * 7.5,squareSize*2.5, "#FF9999", 10, true,[],0)//"Enemy4",squareSize * 17.5,squareSize*1.5, "#FF9999", 10, true,[],0
 
+
+
+function findEnemy(name)
+{
+    for(let i = 0; i < enemies.length; i++)
+    {
+        if(enemies[i].getName == name)
+        {
+            return enemies[i]
+        }
+    }
+}
 units.push(player1)
 
 allies.push(player1)
@@ -359,6 +371,11 @@ function enemyTurn()
                 // Make an offset so that if the enemy is ranged he doesnt walk too close
             }
         }
+    }
+    if(findEnemy("Enemy1").isAlive == false && findEnemy("Enemy2").isAlive == false &&findEnemy("Enemy3").isAlive == false && !spawnBig)
+    {
+        spawnBig = true   
+        makeEnemy("Enemy4" , squareSize * 10.5,squareSize*12.5, "#9999FF", 100, true,[],1)
     }
     endEnemyTurn()
 }
@@ -678,36 +695,37 @@ function thermalGrenade(targetTile)
     
     if(withinRange(targetTile.center, thermalGrenadeAction))
     {
-        let radius = thermalGrenadeAction.currAoe 
-        // console.log(topLeftRow,targetTile.row + (2*radius))
-
-        // Top left tile is ... mapTiles[targetTile.row - thermalGrenadeAction.radius][targetTile.col - thermalGrenadeAction.radius]
-        let topLeftRow = targetTile.row - radius
-        let topLeftCol = targetTile.col - radius
-        let bottomRightRow = targetTile.row + radius
-        let bottomRightCol = targetTile.col + radius
-        for(let currRow = 0; currRow <= bottomRightRow-topLeftRow;currRow++)
-        {
-            // console.log("Hello")
-            for(let currCol = 0; currCol <= bottomRightCol-topLeftCol;currCol++)
-            {
-                if(topLeftRow + currRow >= 0 && topLeftCol + currCol >= 0)
-                {
-                    if(round(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]),6) <= round(thermalGrenadeAction.relativeAoe,6))
-                    {                   
-                        console.log(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]), thermalGrenadeAction.relativeAoe)
-                        fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
-                        damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
-                    }
-                   
-                }
-            }
-        }
-        
+        doAoe(targetTile,thermalGrenadeAction)
+        endPlayerTurn()
     }
     else
     {
         alert("Outta range")
+    }
+}
+function doAoe(targetTile,action)
+{
+    let radius = action.currAoe 
+    let topLeftRow = targetTile.row - radius
+    let topLeftCol = targetTile.col - radius
+    let bottomRightRow = targetTile.row + radius
+    let bottomRightCol = targetTile.col + radius
+    for(let currRow = 0; currRow <= bottomRightRow-topLeftRow;currRow++)
+    {
+            // console.log("Hello")
+        for(let currCol = 0; currCol <= bottomRightCol-topLeftCol;currCol++)
+        {
+            if(topLeftRow + currRow >= 0 && topLeftCol + currCol >= 0)
+            {
+                if(round(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]),6) <= round(action.relativeAoe,6))
+                {                   
+                    console.log(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]), action.relativeAoe)
+                    fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
+                    damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+                }
+                   
+            }
+        }
     }
 }
 ////////////////////////////////////////////////////
