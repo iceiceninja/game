@@ -13,11 +13,11 @@ let allies = []
 
 let tick = 0
 let mapTiles = [];
-let mapTilesCol = [];
+
 let colLength = 0
 
-
 let isPlayerTurn = true
+let isAoe = false
 
 
 let actionArray = []
@@ -45,18 +45,37 @@ function drawBall(x,y,rad, color) {
     ctx.closePath();
 }
 class mapTile{
+    
     constructor(x,y,width,height,tileNum){
         this.x= x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.tileNum = tileNum;
+        let row = null
+        let col = null
     }
     drawSelf() {
         drawRect(this.x,this.y,this.width,this.height,"#000000","#FFFFFF");    
     }
     get center(){
         return [(this.x + this.width/2),(this.y + this.height/2)]
+    }
+    get getRow()
+    {
+        return this.row
+    }
+    set setRow(num)
+    {
+        this.row = num
+    }
+    get getCol()
+    {
+        return this.col
+    }
+    set setCol(num)
+    {
+        this.col = num
     }
     occupied(){
         console.log(player1.center == this.center)
@@ -149,14 +168,15 @@ class Player{
 
 class rangeBall
 {
-    constructor(x,y,rad)
+    constructor(x,y,rad, color)
     {
         this.x = x;
         this.y = y;
-        this.rad = rad;   
+        this.rad = rad;
+        this.color = color;   
     }
     drawSelf(){
-        drawBall(this.x,this.y,this.rad, "#00FF9999")
+        drawBall(this.x,this.y,this.rad, this.color)
     }
     set range(num)
     {
@@ -170,8 +190,8 @@ class rangeBall
 }
 
 let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#0095DD",100, true,[],0)
-let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0)
-
+let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
+let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#99999999")
 makeEnemy("Enemy1",squareSize * 11.5,squareSize*15.5, "#FF9999", 10, true,[],0)
 makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
 // makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
@@ -208,6 +228,8 @@ function getMousePosition(canvas, event) {
 
 function draw()
 {
+    let mapTilesCol = [];
+    let row = 0
     tick += 1;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let x = 0
@@ -216,11 +238,15 @@ function draw()
     while (y < canvas.height){
         while (x < canvas.width){
             let newMapTile = new mapTile(x,y,squareSize,squareSize, tileNum)
-            if(colLength != 0 && mapTilesCol == colLength){
-                pushPop(mapTilesCol,newMapTile)
-            }else{
+            // if(colLength != 0 && mapTilesCol == colLength){
+            //     pushPop(mapTilesCol,newMapTile)
+            //     newMapTile.setCol = mapTilesCol.length - 1
+            //     newMapTile.setRow = row
+            // }else{
                 mapTilesCol.push(newMapTile);
-            }
+                newMapTile.setCol = mapTilesCol.length -1
+                newMapTile.setRow = row
+            // }
             tileNum += 1;
             newMapTile.drawSelf()
             x+=squareSize
@@ -228,11 +254,15 @@ function draw()
         x = 0
         colLength = mapTilesCol.length;
         mapTiles.push(mapTilesCol);
+        row += 1
         mapTilesCol = []
         y += squareSize
     } 
     rangeDisp.center = [player1.center[0], player1.center[1]]
     rangeDisp.drawSelf()
+
+    aoeRange.drawSelf()
+
     if(player1.currentHealth > 0)
     {
         player1.drawSelf()
@@ -338,7 +368,7 @@ function enemyTurn()
 
 class Action
 {
-    constructor(name, active, charges, range, price)
+    constructor(name, active, charges, range, price, aoe)
     {
         this.name = name;
         this.active = active;
@@ -346,6 +376,7 @@ class Action
         this.range = range;
         this.price = price;
         let actionNum = null
+        this.aoe = aoe
     }
     get selected()
     {
@@ -354,6 +385,22 @@ class Action
     get getName()
     {
         return this.name
+    }
+    get relativeAoe()
+    {
+        return this.aoe * squareSize
+    }
+    set relativeAoe(num)
+    {
+        this.aoe = num * squareSize
+    }
+    get currAoe()
+    {
+        return this.aoe
+    }
+    set currAoe(num)
+    {
+        this.aoe = num
     }
     get number()
     {
@@ -398,6 +445,8 @@ class Action
 
 document.addEventListener("keyup", function(event) 
 {
+    aoeRange.range = 0
+    isAoe = false
     if(event.key == "s"||event.key == "S")
     {
         openShop()
@@ -430,6 +479,11 @@ document.addEventListener("keyup", function(event)
                     case "Weak Shield":
                         rangeDisp.range = weakShieldAction.relativeRange
                         break;
+                    case "Thermal Grenade":
+                        isAoe = true
+                        rangeDisp.range = thermalGrenadeAction.relativeRange
+                        //aoeRange.range = thermalGrenadeAction.relativeRange
+                        break;
                     default:
                         alert("Action Name not detected: " + actionArray[i].name)
                 }
@@ -444,13 +498,14 @@ document.addEventListener("keyup", function(event)
 addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
 addAction("Plasma Beam",false,1,15, 30)
-addAction("EMP Grenade",false,1,10, 50)
+addAction("Thermal Grenade",false,1,6, 50,1)
 addAction("Weak Shield", false, 1, .75, 25)
 
 let laserPistolAction = searchAction("Laser Pistol")
 let moveAction = searchAction("Move")
 let plasmaBeamAction = searchAction("Plasma Beam")
 let weakShieldAction = searchAction("Weak Shield")
+let thermalGrenadeAction = searchAction("Thermal Grenade")
 
 moveAction.obtained()
 laserPistolAction.obtained()
@@ -480,7 +535,7 @@ function mousePos(e)
         let y = getMousePosition(canvas,e)[1];
         col = Math.floor(x/squareSize)
         row = Math.floor(y/squareSize)
-        return mapTiles[row][col].center;
+        return mapTiles[row][col];
     }
 
     //replace this whole function with just the ability to return mouse pos (on click) to action functions
@@ -488,13 +543,6 @@ function mousePos(e)
     {
         if(canTakeActions == true){
             targetTile = mousePos(e)
-            // for(let i = 0; i < units.length; i++)
-            // {
-            //     if(targetTile[0] == units[i].center[0] && targetTile[1] == units[i].center[1])
-            //     {
-            //         console.log(units[i].name + " has been clicked")
-            //     }
-            // }
             for(let i = 0; i < actionArray.length; i++)
             {
                 if(actionArray[i].selected == true)
@@ -502,16 +550,21 @@ function mousePos(e)
                     switch (actionArray[i].name)
                     {
                         case "Move":
-                            move(targetTile)
+                            move(targetTile.center)
                             break;
                         case "Laser Pistol":
-                            LP(targetTile)
+                            LP(targetTile.center)
                             break;
                         case "Plasma Beam":
-                            plasmaBeam(targetTile)
+                            plasmaBeam(targetTile.center)
                             break; 
                         case "Weak Shield":
-                            weakShield(targetTile)
+                            weakShield(targetTile.center)
+                            break;
+                        case "Thermal Grenade":
+                            // aoeRange.center = [targetTile.center[0], targetTile.center[1]]
+                            // aoeRange.range = 3 * squareSize
+                            thermalGrenade(targetTile)
                             break;
                         default:
                             alert("Action Name not detected on click: " + actionArray[i].name)
@@ -520,6 +573,14 @@ function mousePos(e)
             }
         }
     });
+    canvas.addEventListener("mousemove", function(e){
+        if(isAoe)
+        {
+            targetTile = mousePos(e)
+            aoeRange.center = [targetTile[0], targetTile[1]]
+            aoeRange.range = 3 * squareSize
+        }
+    })
 
 
 function withinRange(targetTile, action)
@@ -576,6 +637,8 @@ function LP(targetTile)
 }
 function move(targetTile)
 {
+    console.log(targetTile.getCol)
+    console.log(targetTile.center)
     if(withinRange(targetTile, moveAction))
         {
             player1.move(targetTile[0],targetTile[1])
@@ -606,13 +669,39 @@ function weakShield(targetTile)
         {                
             if(units[i].center[0] == targetTile[0] && units[i].center[1] == targetTile[1])
             {
-                units[i].currentShield += 1
+                units[i].currentShield = 1
             }
         }
         endPlayerTurn()
     }else
     {
         alert("Not in range")
+    }
+}
+function thermalGrenade(targetTile)
+{
+    
+    if(withinRange(targetTile.center, thermalGrenadeAction))
+    {
+        let radius = thermalGrenadeAction.currAoe 
+        // console.log(topLeftRow,targetTile.row + (2*radius))
+
+        // Top left tile is ... mapTiles[targetTile.row - thermalGrenadeAction.radius][targetTile.col - thermalGrenadeAction.radius]
+        let topLeftRow = targetTile.row - radius
+        let topLeftCol = targetTile.col - radius
+        let bottomRightRow = targetTile.row + radius
+        let bottomRightCol = targetTile.col + radius
+
+        for(let currRow = 0; currRow <= bottomRightRow-topLeftRow;currRow++)
+        {
+            // console.log("Hello")
+            for(let currCol = 0; currCol <= bottomRightCol-topLeftCol;currCol++)
+            {
+                fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
+                damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+            }
+        }
+        
     }
 }
 ////////////////////////////////////////////////////
@@ -696,9 +785,9 @@ function highlight(element){
 function unHighlight(element){
         element.style.background = 'transparent'
 }
-function addAction(name, active, charges, range, price)
+function addAction(name, active, charges, range, price, aoe)
 {
-    let newAction = new Action(name,active,charges,range,price)
+    let newAction = new Action(name,active,charges,range,price, aoe)
     actionArray.push(newAction)
     addToShop(newAction, price)
 }
