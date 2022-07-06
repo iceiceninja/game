@@ -190,8 +190,10 @@ class rangeBall
 }
 
 let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#0095DD",100, true,[],0)
+
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
-let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#99999999")
+let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#400F0333")
+
 makeEnemy("Enemy1",squareSize * 11.5,squareSize*15.5, "#FF9999", 10, true,[],0)
 makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
 // makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
@@ -238,15 +240,9 @@ function draw()
     while (y < canvas.height){
         while (x < canvas.width){
             let newMapTile = new mapTile(x,y,squareSize,squareSize, tileNum)
-            // if(colLength != 0 && mapTilesCol == colLength){
-            //     pushPop(mapTilesCol,newMapTile)
-            //     newMapTile.setCol = mapTilesCol.length - 1
-            //     newMapTile.setRow = row
-            // }else{
-                mapTilesCol.push(newMapTile);
-                newMapTile.setCol = mapTilesCol.length -1
-                newMapTile.setRow = row
-            // }
+            mapTilesCol.push(newMapTile);
+            newMapTile.setCol = mapTilesCol.length -1
+            newMapTile.setRow = row
             tileNum += 1;
             newMapTile.drawSelf()
             x+=squareSize
@@ -261,6 +257,7 @@ function draw()
     rangeDisp.center = [player1.center[0], player1.center[1]]
     rangeDisp.drawSelf()
 
+    rangeDisp.center = [player1.center[0], player1.center[1]]
     aoeRange.drawSelf()
 
     if(player1.currentHealth > 0)
@@ -482,7 +479,7 @@ document.addEventListener("keyup", function(event)
                     case "Thermal Grenade":
                         isAoe = true
                         rangeDisp.range = thermalGrenadeAction.relativeRange
-                        //aoeRange.range = thermalGrenadeAction.relativeRange
+                        // aoeRange.range = thermalGrenadeAction.relativeRange
                         break;
                     default:
                         alert("Action Name not detected: " + actionArray[i].name)
@@ -498,7 +495,7 @@ document.addEventListener("keyup", function(event)
 addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
 addAction("Plasma Beam",false,1,15, 30)
-addAction("Thermal Grenade",false,1,6, 50,1)
+addAction("Thermal Grenade",false,1,6, 50,2)
 addAction("Weak Shield", false, 1, .75, 25)
 
 let laserPistolAction = searchAction("Laser Pistol")
@@ -577,8 +574,8 @@ function mousePos(e)
         if(isAoe)
         {
             targetTile = mousePos(e)
-            aoeRange.center = [targetTile[0], targetTile[1]]
-            aoeRange.range = 3 * squareSize
+            aoeRange.center = [targetTile.center[0], targetTile.center[1]]
+            aoeRange.range = thermalGrenadeAction.relativeAoe
         }
     })
 
@@ -637,8 +634,6 @@ function LP(targetTile)
 }
 function move(targetTile)
 {
-    console.log(targetTile.getCol)
-    console.log(targetTile.center)
     if(withinRange(targetTile, moveAction))
         {
             player1.move(targetTile[0],targetTile[1])
@@ -691,14 +686,16 @@ function thermalGrenade(targetTile)
         let topLeftCol = targetTile.col - radius
         let bottomRightRow = targetTile.row + radius
         let bottomRightCol = targetTile.col + radius
-
         for(let currRow = 0; currRow <= bottomRightRow-topLeftRow;currRow++)
         {
             // console.log("Hello")
             for(let currCol = 0; currCol <= bottomRightCol-topLeftCol;currCol++)
             {
-                fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
-                damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+                if(topLeftRow + currRow >= 0 && topLeftCol + currCol >= 0)
+                {
+                    fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
+                    damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
+                }
             }
         }
         
