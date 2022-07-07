@@ -4,14 +4,15 @@ var ctx = canvas.getContext("2d")
 let canTakeActions = false
 
 let credits = 100
+let turnNum = 0
 
 let squareSize = canvas.height/13
 
 let units = []
 let enemies = []
 let allies = []
+let spawners = []
 
-let tick = 0
 let mapTiles = [];
 
 let colLength = 0
@@ -199,7 +200,46 @@ makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
 // makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
 makeEnemy("Enemy3",squareSize * 7.5,squareSize*2.5, "#FF9999", 10, true,[],0)//"Enemy4",squareSize * 17.5,squareSize*1.5, "#FF9999", 10, true,[],0
 
+class Spawner
+{
+    constructor(x,y,width,height,color, spawnerHealth,alive)
+    {
+        this.x = x
+        this.y = y
+        this.color = color
+        this.width = width;
+        this.height = height;
+        this.spawnerHealth = spawnerHealth;
+        this.alive = alive
+    }
+    get currentHealth(){
+        return this.spawnerHealth
+    }
+    set currentHealth(amount){
+        this.spawnerHealth += amount;
+        if(this.spawnerHealth <= 0)
+        {
+            this.alive = false
+        }
+    }
+    get isAlive()
+    {
+        return this.alive
+    }
+    set isAlive(bool)
+    {
+        this.alive = bool
+    }
+    spawnEnemy(health, alive,effects,shield)
+    {
+        makeEnemy("Enemy",this.x,this.y, "#FF9999", health, alive,effects,shield)
+    }
+    drawSelf()
+    {
+        drawRect(this.x,this.y,this.width,this.height,"#000000",this.color);    
+    }
 
+}
 
 function findEnemy(name)
 {
@@ -231,10 +271,15 @@ function getMousePosition(canvas, event) {
     return [x,y]
 }
 
-  
 
-
-
+// let test = new Spawner(20*squareSize,20*squareSize,squareSize*2,squareSize*2,"#0F7721")
+function makeSpawner(x,y,width,height,color, spawnerHealth,alive)
+{
+    let newSpawner = new Spawner(x,y,width,height,color, spawnerHealth,alive)
+   // units.push(newSpawner)
+    spawners.push(newSpawner)
+}
+makeSpawner(20*squareSize,20*squareSize,squareSize*2,squareSize*2,"#0F7721", 50, true)
 //To center something inside of mapTile, do squareSize * (number of tile -.5)
 //This finds the tile, let's say 2nd from left, and instead of putting it at the end of the
 //tile it places it halfway in the tile, which when drawing a circle, is exactly where we want it 
@@ -244,7 +289,6 @@ function draw()
 {
     let mapTilesCol = [];
     let row = 0
-    tick += 1;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let x = 0
     let y = 0
@@ -272,19 +316,25 @@ function draw()
     rangeDisp.center = [player1.center[0], player1.center[1]]
     aoeRange.drawSelf()
 
-    if(player1.currentHealth > 0)
-    {
-        player1.drawSelf()
-    }
-    for(let i = 0; i < enemies.length; i++){
-        if(enemies[i].currentHealth > 0)
+    for(let i = 0; i < units.length; i++){
+        if(units[i].currentHealth > 0)
         {
-            enemies[i].drawSelf()
+            units[i].drawSelf()
         }else
         {
-            enemies[i].isAlive = false
+            units[i].isAlive = false
         }
     }
+    for(let i = 0; i < spawners.length; i++){
+        if(spawners[i].currentHealth > 0)
+        {
+            spawners[i].drawSelf()
+        }else
+        {
+            spawners[i].isAlive = false
+        }
+    }
+    // test.drawSelf()
     document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth + "<br>Player Shield: " + player1.currentShield
     document.getElementById("credits").innerHTML = "Credits: " + credits
 }
@@ -309,7 +359,6 @@ function pushPop(array, pushElement)
     array.pop()
     array.push(pushElement)
 }
-let turnNum = 0
 
 playerTurn()
 function playerTurn()
@@ -329,6 +378,19 @@ function playerTurn()
 
 function enemyTurn()
 {
+    if(turnNum % 3 == 0)
+    {
+        for(let i = 0; i < spawners.length; i++){
+            if(spawners[i].currentHealth > 0)
+            {
+                spawners[i].spawnEnemy(5,true,[],0)
+            }else
+            {
+                spawners[i].isAlive = false
+            }
+        }
+        
+    }
     for(let i = 0; i < enemies.length; i++){
         let currentEnemy = enemies[i]
         if(currentEnemy.isAlive){
@@ -512,7 +574,7 @@ document.addEventListener("keyup", function(event)
 addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
 addAction("Plasma Beam",false,1,15, 30)
-addAction("Thermal Grenade",false,1,6, 50,2)
+addAction("Thermal Grenade",false,1,6, 50,4)
 addAction("Weak Shield", false, 1, .75, 25)
 
 let laserPistolAction = searchAction("Laser Pistol")
