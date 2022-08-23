@@ -1,0 +1,23 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "Working on a game that will be a futuristic turn based fighting game.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iceiceninja/game.git"
+  },
+  "author": "Joshua Bonham",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iceiceninja/game/issues"
+  },
+  "homepage": "https://github.com/iceiceninja/game#readme",
+  "dependencies": {
+    "express": "^4.18.1",
+    "nodemon": "^2.0.19"
+  }
+}
