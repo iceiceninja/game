@@ -18,6 +18,7 @@ let mapTiles = [];
 let colLength = 0
 
 let isPlayerTurn = true
+let isEnemyTurn = false
 let isAoe = false
 let spawnBig = false
 
@@ -57,7 +58,7 @@ class mapTile{
         let col = null
     }
     drawSelf() {
-        drawRect(this.x,this.y,this.width,this.height,"#000000","#FFFFFF");    
+        drawRect(this.x,this.y,this.width,this.height,"#000000","#F5EFED");    
     }
     get center(){
         return [(this.x + this.width/2),(this.y + this.height/2)]
@@ -145,7 +146,7 @@ class Player{
         let validMove = true
         for(let i = 0;i < units.length; i++)
         {
-            if(units[i].center[0] == x && units[i].center[1] == y && units[i].isAlive == true)
+            if(round(units[i].center[0],5) == round(x,5) && round(units[i].center[1],5) == round(y,5) && units[i].isAlive == true)
             {
                 console.log("collision avoided")
                 validMove = false
@@ -190,19 +191,24 @@ class rangeBall
     }
 }
 
-let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#0095DD",100, true,[],0)
+let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)//0095DD
 
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
 let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#400F0333")
 
-makeEnemy("Enemy1",squareSize * 11.5,squareSize*15.5, "#FF9999", 10, true,[],0)
-makeEnemy("Enemy2",squareSize * 5.5,squareSize*5.5, "#FF9999", 10, true,[],0)
+///////////////////////////////////////////////////////////
+///////// COLOR ALLIES #A8DADC
+/////////
+//////////////////////////////////////////////////////////
+
+makeUnit("Enemy1",squareSize * 11.5,squareSize*15.5, "#e63946", 10, true,[],0)//FF9999
+makeUnit("Enemy2",squareSize * 5.5,squareSize*5.5, "#e63946", 10, true,[],0)
 // makeEnemy("Enemy3",squareSize * 7.5,squareSize*3.5, "#FF9999", 10, true,[],0)
-makeEnemy("Enemy3",squareSize * 7.5,squareSize*2.5, "#FF9999", 10, true,[],0)//"Enemy4",squareSize * 17.5,squareSize*1.5, "#FF9999", 10, true,[],0
+makeUnit("Enemy3",squareSize * 7.5,squareSize*2.5, "#e63946", 10, true,[],0)//"Enemy4",squareSize * 17.5,squareSize*1.5, "#FF9999", 10, true,[],0
 
 class Spawner
 {
-    constructor(x,y,width,height,color, spawnerHealth,alive)
+    constructor(x,y,width,height,color, spawnerHealth,alive,effects)
     {
         this.x = x
         this.y = y
@@ -211,6 +217,7 @@ class Spawner
         this.height = height;
         this.spawnerHealth = spawnerHealth;
         this.alive = alive
+        this.effects = effects
     }
     get currentHealth(){
         return this.spawnerHealth
@@ -230,9 +237,18 @@ class Spawner
     {
         this.alive = bool
     }
-    spawnEnemy(health, alive,effects,shield)
+    get center(){
+        return [(this.x + this.width/2),(this.y + this.height/2)]
+    }
+    spawnUnit(health, alive,effects,shield)
     {
-        makeEnemy("Enemy",this.x,this.y, "#FF9999", health, alive,effects,shield)
+        // Make enemy spawn in closest non occupied space
+        //
+        // for(let i = 0; i < units.length; i++)
+        // {
+        //     units[i].center ==
+        // }
+        makeUnit("Enemy",this.center[0]+squareSize,this.center[1], "#FF9999", health, alive,effects,shield)
     }
     drawSelf()
     {
@@ -257,11 +273,38 @@ allies.push(player1)
 
 player1.currentHealth = 0
 
-function makeEnemy(name,x,y, color, health, alive,effects,shield)
+function makeUnit(name,x,y, color, health, alive,effects,shield)
 {
-    let newEnemy = new Player(name,x,y, color, health, alive,effects,shield)
-    units.push(newEnemy)
-    enemies.push(newEnemy)
+    let isAlly = false
+    let canSpawn = true
+
+    for(let i = 0;i < effects.length; i++)
+    {
+        if(effects[i] == "Ally")
+        {
+            isAlly = true
+        }
+    }
+    for(let i = 0; i < units.length; i++)
+    {
+        if(round(units[i].center[0],5) == round(x,5) && round(units[i].center[1],5) == round(y,5) && units[i].isAlive == true)
+        {
+           canSpawn = false;
+        }
+    }
+    if(canSpawn)
+    {
+        let newUnit = new Player(name,x,y, color, health, alive,effects,shield)
+        units.push(newUnit)
+        if(isAlly)
+        {
+            allies.push(newUnit)
+        }
+       else
+       {
+            enemies.push(newUnit)
+       }
+    }
 }
 
 function getMousePosition(canvas, event) {
@@ -273,13 +316,41 @@ function getMousePosition(canvas, event) {
 
 
 // let test = new Spawner(20*squareSize,20*squareSize,squareSize*2,squareSize*2,"#0F7721")
-function makeSpawner(x,y,width,height,color, spawnerHealth,alive)
+function makeSpawner(x,y,width,height,color, spawnerHealth,alive,effects)
 {
-    let newSpawner = new Spawner(x,y,width,height,color, spawnerHealth,alive)
-   // units.push(newSpawner)
-    spawners.push(newSpawner)
+    let isAlly = false
+    let canSpawn = true
+
+    for(let i = 0;i < effects.length; i++)
+    {
+        if(effects[i] == "Ally")
+        {
+            isAlly = true
+        }
+    }
+    for(let i = 0; i < units.length; i++)
+    {
+        if(round(units[i].center[0],5) == round(x,5) && round(units[i].center[1],5) == round(y,5) && units[i].isAlive == true)
+        {
+           canSpawn = false;
+        }
+    }
+    if(canSpawn)
+    {
+        let newSpawner = new Spawner(x,y,width,height,color, spawnerHealth,alive,effects)
+        units.push(newSpawner)
+        spawners.push(newSpawner)
+        if(isAlly)
+        {
+            allies.push(newSpawner)
+        }
+       else
+       {
+            enemies.push(newSpawner)
+       }
+    }
 }
-makeSpawner(20*squareSize,20*squareSize,squareSize*2,squareSize*2,"#0F7721", 50, true)
+makeSpawner(20*squareSize,20*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
 //To center something inside of mapTile, do squareSize * (number of tile -.5)
 //This finds the tile, let's say 2nd from left, and instead of putting it at the end of the
 //tile it places it halfway in the tile, which when drawing a circle, is exactly where we want it 
@@ -287,6 +358,21 @@ makeSpawner(20*squareSize,20*squareSize,squareSize*2,squareSize*2,"#0F7721", 50,
 
 function draw()
 {
+    /*
+    TODO:
+
+    Make a binary sort algorithm to sort through mapTiles to speed it up (along with anything else
+        that needs to be searched through and is large. NOTE: This requires MapTiles to be sorted
+        in ascending order. Do so with the tileNum)
+
+    Make a drawables array, so that way we can leave the draw method to only draw
+    and leave calculations to outside of something called every 100 miliseconds or something
+
+    See if you can make another layer of drawing stuff. That way you can leave the mapTiles
+    on the background (so we dont have to draw 100+ every 100ms) and we can still have another
+    layer that works exactly to how our current layer works (With erasing and drawing taking place
+        constantly)
+    */
     let mapTilesCol = [];
     let row = 0
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -315,7 +401,8 @@ function draw()
 
     rangeDisp.center = [player1.center[0], player1.center[1]]
     aoeRange.drawSelf()
-
+    // Eventually try to make an array of drawables so you dont have to itterate through
+    // so many arrays
     for(let i = 0; i < units.length; i++){
         if(units[i].currentHealth > 0)
         {
@@ -325,30 +412,40 @@ function draw()
             units[i].isAlive = false
         }
     }
-    for(let i = 0; i < spawners.length; i++){
-        if(spawners[i].currentHealth > 0)
-        {
-            spawners[i].drawSelf()
-        }else
-        {
-            spawners[i].isAlive = false
-        }
-    }
+    // for(let i = 0; i < spawners.length; i++){
+    //     if(spawners[i].currentHealth > 0)
+    //     {
+    //         spawners[i].drawSelf()
+    //     }else
+    //     {
+    //         spawners[i].isAlive = false
+    //     }
+    // }
     // test.drawSelf()
     document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth + "<br>Player Shield: " + player1.currentShield
     document.getElementById("credits").innerHTML = "Credits: " + credits
 }
 
+
+// Turn order should go Player, Allies ,Enemies
 function endPlayerTurn()
 {
     canTakeActions = false
+    isEnemyTurn = false
     isPlayerTurn = false
-    enemyTurn()
+    allyTurn()
 }
 function endEnemyTurn()
 {
     isPlayerTurn = true
+    isEnemyTurn = false
     playerTurn()
+}
+function endAllyTurn()
+{
+    isEnemyTurn = true
+    isPlayerTurn = false
+    enemyTurn()
 }
 function getDistance(x1,x2,y1,y2)
 {
@@ -378,12 +475,12 @@ function playerTurn()
 
 function enemyTurn()
 {
-    if(turnNum % 3 == 0)
+    if(turnNum % 4 == 0)
     {
         for(let i = 0; i < spawners.length; i++){
             if(spawners[i].currentHealth > 0)
             {
-                spawners[i].spawnEnemy(5,true,[],0)
+                spawners[i].spawnUnit(5,true,[],0)
             }else
             {
                 spawners[i].isAlive = false
@@ -393,55 +490,143 @@ function enemyTurn()
     }
     for(let i = 0; i < enemies.length; i++){
         let currentEnemy = enemies[i]
-        if(currentEnemy.isAlive){
-            canTakeActions = false
+        if(searchArray(currentEnemy.effects,"Spawner") == null)
+        {
+
             
-            document.getElementById('gameStatus').innerHTML = "Enemy Turn"
-            
-            let currentSquare = findCurrentSquare(currentEnemy.center[0],currentEnemy.center[1])
-            
-            let movex = 0
-            let movey = 0
-            
-            let differencex = (player1.center[0]-currentEnemy.center[0])
-            let differencey = (player1.center[1]-currentEnemy.center[1])
-            
-            let offset = squareSize * 2.5
-            
-            if(getDistance(currentEnemy.center[0], player1.center[0],currentEnemy.center[1], 
-                player1.center[1]) <= laserPistolAction.relativeRange)
-            {
-                LP(player1.center)
-            }
-            else{
-                if(player1.center[0] != currentEnemy.center[0] && offset < Math.abs(differencex))
-                {
-                    movex = differencex/Math.abs(differencex)
-                    // alert("movex: " + movex)
-                }
-                if(player1.center[1] != currentEnemy.center[1] && offset < Math.abs(differencey))
-                {
-                    movey = differencey/Math.abs(differencey)
-                    // alert("movey: " + movey)
-                }
-                currentEnemy.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
-                    mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+            if(currentEnemy.isAlive){
+                canTakeActions = false
                 
-                //Get player current square in MapTIles coordinates
-                // The line between player and enemy will always go through the square that the 
-                //enemy should choose to walk though
-                // Make an offset so that if the enemy is ranged he doesnt walk too close
+                document.getElementById('gameStatus').innerHTML = "Enemy Turn"
+                
+                let currentSquare = findCurrentSquare(currentEnemy.center[0],currentEnemy.center[1])
+                
+                let movex = 0
+                let movey = 0
+                
+                let offset = squareSize * 2.5
+
+                let leastDistance = 1000000
+                let closestTarget = null
+                for(let i = 0; i < allies.length;i++)
+                {
+                    if(allies[i].isAlive){
+                        let distToCurrentTarget = getDistance(currentEnemy.center[0], allies[i].center[0],currentEnemy.center[1], 
+                            allies[i].center[1])
+                        if (distToCurrentTarget < leastDistance)
+                            {
+                                closestTarget = allies[i]
+                            }
+                    }
+                }
+
+                let differencex = (closestTarget.center[0]-currentEnemy.center[0])
+                let differencey = (closestTarget.center[1]-currentEnemy.center[1])
+                
+                if(getDistance(currentEnemy.center[0], closestTarget.center[0],currentEnemy.center[1], 
+                    closestTarget.center[1]) <= laserPistolAction.relativeRange)
+                {
+                    LP(closestTarget.center)
+                }
+                else{
+                    if(closestTarget.center[0] != currentEnemy.center[0] && offset < Math.abs(differencex))
+                    {
+                        movex = differencex/Math.abs(differencex)
+                        // alert("movex: " + movex)
+                    }
+                    if(closestTarget.center[1] != currentEnemy.center[1] && offset < Math.abs(differencey))
+                    {
+                        movey = differencey/Math.abs(differencey)
+                        // alert("movey: " + movey)
+                    }
+                    currentEnemy.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
+                        mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+                    
+                    //Get player current square in MapTIles coordinates
+                    // The line between player and enemy will always go through the square that the 
+                    //enemy should choose to walk though
+                    // Make an offset so that if the enemy is ranged he doesnt walk too close
+                }
             }
         }
     }
-    if(findEnemy("Enemy1").isAlive == false && findEnemy("Enemy2").isAlive == false &&findEnemy("Enemy3").isAlive == false && !spawnBig)
-    {
-        spawnBig = true   
-        makeEnemy("Enemy4" , squareSize * 10.5,squareSize*12.5, "#9999FF", 100, true,[],1)
-    }
+    // if(findEnemy("Enemy1").isAlive == false && findEnemy("Enemy2").isAlive == false &&findEnemy("Enemy3").isAlive == false && !spawnBig)
+    // {
+    //     spawnBig = true   
+    //     makeEnemy("Enemy4" , squareSize * 10.5,squareSize*12.5, "#9999FF", 100, true,[],1)
+    // }
     endEnemyTurn()
 }
+function allyTurn()
+{
+    for(let i = 0; i < allies.length; i++){
+        let currentAlly = allies[i]
+        if(currentAlly.name != "Player")
+        {
+            if(currentAlly.isAlive)
+            {
+                canTakeActions = false
+                
+                document.getElementById('gameStatus').innerHTML = "Ally Turn"
+                
+                let currentSquare = findCurrentSquare(currentAlly.center[0],currentAlly.center[1])
+                
+                let movex = 0
+                let movey = 0
+                
+                
+                
+                let offset = squareSize * 2.5
 
+                let leastDistance = 1000000
+                let closestTarget = null
+                for(let i = 0; i < enemies.length;i++)
+                {
+                    if(enemies[i].isAlive)
+                    {
+                        let distToCurrentTarget = getDistance(currentAlly.center[0], enemies[i].center[0],
+                            currentAlly.center[1], 
+                            enemies[i].center[1])
+                        if (distToCurrentTarget < leastDistance)
+                            {
+                                closestTarget = enemies[i]
+                            }
+                    }
+                }
+
+                let differencex = (closestTarget.center[0]-currentAlly.center[0])
+                let differencey = (closestTarget.center[1]-currentAlly.center[1])
+
+                if(getDistance(currentAlly.center[0], closestTarget.center[0],currentAlly.center[1], 
+                    closestTarget.center[1]) <= laserPistolAction.relativeRange)
+                {
+                    LP(closestTarget.center)
+                }
+                else{
+                    if(closestTarget.center[0] != currentAlly.center[0] && offset < Math.abs(differencex))
+                    {
+                        movex = differencex/Math.abs(differencex)
+                        // alert("movex: " + movex)
+                    }
+                    if(closestTarget.center[1] != currentAlly.center[1] && offset < Math.abs(differencey))
+                    {
+                        movey = differencey/Math.abs(differencey)
+                        // alert("movey: " + movey)
+                    }
+                    currentAlly.move(mapTiles[currentSquare[0]][currentSquare[1]].center[0] + (squareSize * movex),
+                        mapTiles[currentSquare[0]][currentSquare[1]].center[1] + (squareSize * movey))// + squareSize)
+                    
+                    //Get player current square in MapTIles coordinates
+                    // The line between player and enemy will always go through the square that the 
+                    //enemy should choose to walk though
+                    // Make an offset so that if the enemy is ranged he doesnt walk too close
+                }
+            }
+        }
+    }
+    
+    endAllyTurn()
+}
 class Action
 {
     constructor(name, active, charges, range, price, aoe)
@@ -560,6 +745,9 @@ document.addEventListener("keyup", function(event)
                         rangeDisp.range = thermalGrenadeAction.relativeRange
                         // aoeRange.range = thermalGrenadeAction.relativeRange
                         break;
+                    case "Build Rusty T1 Deathbot":
+                        rangeDisp.range = buildRustBotAction.relativeRange
+                        break;
                     default:
                         alert("Action Name not detected: " + actionArray[i].name)
                 }
@@ -574,14 +762,16 @@ document.addEventListener("keyup", function(event)
 addAction("Move",false,100,1.5,0)
 addAction("Laser Pistol",false,1,10, 10)
 addAction("Plasma Beam",false,1,15, 30)
-addAction("Thermal Grenade",false,1,6, 50,4)
+addAction("Thermal Grenade",false,1,6, 50,2)
 addAction("Weak Shield", false, 1, .75, 25)
+addAction("Build Rusty T1 Deathbot", false, 4,1.5, 15)
 
 let laserPistolAction = searchAction("Laser Pistol")
 let moveAction = searchAction("Move")
 let plasmaBeamAction = searchAction("Plasma Beam")
 let weakShieldAction = searchAction("Weak Shield")
 let thermalGrenadeAction = searchAction("Thermal Grenade")
+let buildRustBotAction = searchAction("Build Rusty T1 Deathbot")
 
 moveAction.obtained()
 laserPistolAction.obtained()
@@ -642,6 +832,9 @@ function mousePos(e)
                             // aoeRange.range = 3 * squareSize
                             thermalGrenade(targetTile)
                             break;
+                        case "Build Rusty T1 Deathbot":
+                            buildBot(targetTile.center)
+                            break;
                         default:
                             alert("Action Name not detected on click: " + actionArray[i].name)
                     }
@@ -685,7 +878,7 @@ function damageTile(targetTile, damage)
 function searchArray(array, searchName)
 {
     for(let i = 0; i<array.length;i++){
-        if(array[i].name == searchName)
+        if(array[i] == searchName)
         {
             return array[i]
             // damageTile(units[i].center,10)
@@ -721,6 +914,18 @@ function move(targetTile)
         {
             alert("notINrange")
         }
+}
+function buildBot(targetTile)
+{
+    if(withinRange(targetTile, buildRustBotAction))
+    {
+        makeUnit("RustBot", targetTile[0],targetTile[1],"#A8DADC",10,true,["Ally"],0)
+        endPlayerTurn()
+    }
+    else
+    {
+        alert("notINrange")
+    }
 }
 function plasmaBeam(targetTile)
 {
@@ -774,14 +979,12 @@ function doAoe(targetTile,action)
     let bottomRightCol = targetTile.col + radius
     for(let currRow = 0; currRow <= bottomRightRow-topLeftRow;currRow++)
     {
-            // console.log("Hello")
         for(let currCol = 0; currCol <= bottomRightCol-topLeftCol;currCol++)
         {
             if(topLeftRow + currRow >= 0 && topLeftCol + currCol >= 0)
             {
                 if(round(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]),6) <= round(action.relativeAoe,6))
                 {                   
-                    console.log(getDistance(targetTile.center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],targetTile.center[1],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1]), action.relativeAoe)
                     fireEffect(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[0],mapTiles[topLeftRow + currRow][topLeftCol + currCol].center[1],150,"#FF0000")
                     damageTile(mapTiles[topLeftRow + currRow][topLeftCol + currCol].center,10)
                 }
