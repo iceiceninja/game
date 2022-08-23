@@ -16,6 +16,7 @@ let spawners = []
 
 let mapTiles = [];
 
+let drawables = [];
 let colLength = 0
 
 let isPlayerTurn = true
@@ -24,7 +25,6 @@ let isAoe = false
 let spawnBig = false
 
 let actionArray = []
-
 
 
 canvas.width = window.innerWidth;
@@ -49,13 +49,16 @@ function drawBall(x,y,rad, color) {
 }
 
 
-
+generateMap()
 
 
 let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)//0095DD
 
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
 let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#400F0333")
+
+drawables.push(rangeDisp)
+drawables.push(aoeRange)
 
 ///////////////////////////////////////////////////////////
 ///////// COLOR ALLIES #A8DADC
@@ -81,6 +84,8 @@ function findEnemy(name)
 units.push(player1)
 
 allies.push(player1)
+
+drawables.push(player1)
 
 player1.currentHealth = 0
 
@@ -115,6 +120,7 @@ function makeUnit(name,x,y, color, health, alive,effects,shield)
        {
             enemies.push(newUnit)
        }
+       drawables.push(newUnit)
     }
 }
 
@@ -159,34 +165,15 @@ function makeSpawner(x,y,width,height,color, spawnerHealth,alive,effects)
        {
             enemies.push(newSpawner)
        }
+       drawables.push(newSpawner)
     }
 }
 makeSpawner(20*squareSize,20*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
-//To center something inside of mapTile, do squareSize * (number of tile -.5)
-//This finds the tile, let's say 2nd from left, and instead of putting it at the end of the
-//tile it places it halfway in the tile, which when drawing a circle, is exactly where we want it 
 
-
-function draw()
+function generateMap()
 {
-    /*
-    TODO:
-
-    Make a binary sort algorithm to sort through mapTiles to speed it up (along with anything else
-        that needs to be searched through and is large. NOTE: This requires MapTiles to be sorted
-        in ascending order. Do so with the tileNum)
-
-    Make a drawables array, so that way we can leave the draw method to only draw
-    and leave calculations to outside of something called every 100 miliseconds or something
-
-    See if you can make another layer of drawing stuff. That way you can leave the mapTiles
-    on the background (so we dont have to draw 100+ every 100ms) and we can still have another
-    layer that works exactly to how our current layer works (With erasing and drawing taking place
-        constantly)
-    */
     let mapTilesCol = [];
     let row = 0
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     let x = 0
     let y = 0
     let tileNum = 1;
@@ -197,8 +184,9 @@ function draw()
             newMapTile.setCol = mapTilesCol.length -1
             newMapTile.setRow = row
             tileNum += 1;
-            newMapTile.drawSelf()
+            //newMapTile.drawSelf()
             x+=squareSize
+            drawables.push(newMapTile)
         }
         x = 0
         colLength = mapTilesCol.length;
@@ -207,32 +195,38 @@ function draw()
         mapTilesCol = []
         y += squareSize
     } 
-    rangeDisp.center = [player1.center[0], player1.center[1]]
-    rangeDisp.drawSelf()
+    
+}
+//To center something inside of mapTile, do squareSize * (number of tile -.5)
+//This finds the tile, let's say 2nd from left, and instead of putting it at the end of the
+//tile it places it halfway in the tile, which when drawing a circle, is exactly where we want it 
 
+
+
+function draw()
+{
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    /*
+    TODO:
+
+    Make a binary sort algorithm to sort through mapTiles to speed it up (along with anything else
+        that needs to be searched through and is large. NOTE: This requires MapTiles to be sorted
+        in ascending order. Do so with the tileNum)
+
+    See if you can make another layer of drawing stuff. That way you can leave the mapTiles
+    on the background (so we dont have to draw 100+ every 100ms) and we can still have another
+    layer that works exactly to how our current layer works (With erasing and drawing taking place
+        constantly)
+    */
+    
     rangeDisp.center = [player1.center[0], player1.center[1]]
-    aoeRange.drawSelf()
-    // Eventually try to make an array of drawables so you dont have to itterate through
-    // so many arrays
-    for(let i = 0; i < units.length; i++){
-        if(units[i].currentHealth > 0)
-        {
-            units[i].drawSelf()
-        }else
-        {
-            units[i].isAlive = false
-        }
+
+    for(let i = 0; i < drawables.length;i++)
+    {
+        drawables[i].drawSelf();
     }
-    // for(let i = 0; i < spawners.length; i++){
-    //     if(spawners[i].currentHealth > 0)
-    //     {
-    //         spawners[i].drawSelf()
-    //     }else
-    //     {
-    //         spawners[i].isAlive = false
-    //     }
-    // }
-    // test.drawSelf()
+    
+
     document.getElementById("playerHealth").innerHTML = "Player Health: " + player1.currentHealth + "<br>Player Shield: " + player1.currentShield
     document.getElementById("credits").innerHTML = "Credits: " + credits
 }
@@ -590,6 +584,15 @@ function withinRange(targetTile, action)
 {
     return getDistance(player1.center[0],targetTile[0],player1.center[1],targetTile[1]) <= action.relativeRange
 }
+
+function removeItemOnce(arr, value) {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+      arr.splice(index, 1);
+    }
+    return arr;
+  }
+
 function damageTile(targetTile, damage)
 {
     // console.log("Target: " + targetTile)
@@ -605,6 +608,11 @@ function damageTile(targetTile, damage)
             {
                 units[i].currentHealth = -damage
                 console.log(units[i].name + " just took " + damage + " damage")
+                if(units[i].currentHealth <= 0)
+                {
+                    removeItemOnce(drawables,units[i])
+                    units[i].isAlive = false
+                }
             }
         }
     }
