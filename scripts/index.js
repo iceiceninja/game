@@ -170,7 +170,10 @@ function makeSpawner(x,y,width,height,color, spawnerHealth,alive,effects)
        drawables.push(newSpawner)
     }
 }
-makeSpawner(20*squareSize,20*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+makeSpawner(getRandomInt(canvas.width/squareSize)*squareSize,getRandomInt(canvas.height/squareSize)*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
 //makeSpawner(30*squareSize,5*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
 function generateMap()
 {
