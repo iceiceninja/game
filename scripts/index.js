@@ -52,7 +52,10 @@ function drawBall(x,y,rad, color) {
 generateMap()
 
 
-let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)//0095DD
+//let player1 = new Player("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)//0095DD
+
+let player1 = makeUnit("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)
+player1.currentHealth = 0
 
 let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
 let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#400F0333")
@@ -81,13 +84,11 @@ function findEnemy(name)
         }
     }
 }
-units.push(player1)
+// units.push(player1)
 
-allies.push(player1)
+// allies.push(player1)
 
-drawables.push(player1)
-
-player1.currentHealth = 0
+// drawables.push(player1)
 
 function makeUnit(name,x,y, color, health, alive,effects,shield)
 {
@@ -121,6 +122,7 @@ function makeUnit(name,x,y, color, health, alive,effects,shield)
             enemies.push(newUnit)
        }
        drawables.push(newUnit)
+       return newUnit
     }
 }
 
@@ -430,6 +432,32 @@ function allyTurn()
     
     endAllyTurn()
 }
+
+function selectAction(actionNum)
+{
+    for(let i = 0; i < actionArray.length; i++)
+    {
+        if(actionArray[i].actionNum == actionNum)
+        {
+            if(actionArray[i].selected == true)
+            {
+                actionArray[i].selected = false
+                changeRangeDisp(-1)
+            }else
+            {
+                actionArray[i].selected = true;
+                changeRangeDisp(actionArray[i].name)
+            }
+            highlight(document.getElementById(actionArray[i].name))
+        }else
+        {
+            actionArray[i].selected = false
+            unHighlight(document.getElementById(actionArray[i].name))
+        }
+    }
+    
+}
+
 document.addEventListener("keyup", function(event) 
 {
     aoeRange.range = 0
@@ -448,40 +476,46 @@ document.addEventListener("keyup", function(event)
         }
         for(let i = 0; i < actionArray.length; i++)
         {
-            actionArray[i].selected = false;
             if(actionArray[i].number == event.key)
             {
-                actionArray[i].selected = true
-                switch (actionArray[i].name)
-                {
-                    case "Move":
-                        rangeDisp.range = moveAction.relativeRange
-                        break;
-                    case "Laser Pistol":
-                        rangeDisp.range = laserPistolAction.relativeRange
-                        break;
-                    case "Plasma Beam":
-                        rangeDisp.range = plasmaBeamAction.relativeRange
-                        break;
-                    case "Weak Shield":
-                        rangeDisp.range = weakShieldAction.relativeRange
-                        break;
-                    case "Thermal Grenade":
-                        isAoe = true
-                        rangeDisp.range = thermalGrenadeAction.relativeRange
-                        // aoeRange.range = thermalGrenadeAction.relativeRange
-                        break;
-                    case "Build Rusty T1 Deathbot":
-                        rangeDisp.range = buildRustBotAction.relativeRange
-                        break;
-                    default:
-                        alert("Action Name not detected: " + actionArray[i].name)
-                }
+                selectAction(actionArray[i].number)
+                changeRangeDisp(actionArray[i].name)
             }
         }
         highlight(document.getElementById(event.key))
     }
 });
+
+function changeRangeDisp(actionName)
+{
+    switch (actionName)
+    {
+        case "Move":
+            rangeDisp.range = moveAction.relativeRange
+            break;
+        case "Laser Pistol":
+            rangeDisp.range = laserPistolAction.relativeRange
+            break;
+        case "Plasma Beam":
+            rangeDisp.range = plasmaBeamAction.relativeRange
+            break;
+        case "Weak Shield":
+            rangeDisp.range = weakShieldAction.relativeRange
+            break;
+        case "Thermal Grenade":
+            isAoe = true
+            rangeDisp.range = thermalGrenadeAction.relativeRange
+            // aoeRange.range = thermalGrenadeAction.relativeRange
+            break;
+        case "Build Rusty T1 Deathbot":
+            rangeDisp.range = buildRustBotAction.relativeRange
+            break;
+        default:
+            //alert("Action Name not detected: " + actionArray[i].name)
+            rangeDisp.range = 0;
+            break;
+    }
+}
 
 // Have a JSON file with a dictionary of the names of actions and their functions?
 
@@ -505,12 +539,16 @@ laserPistolAction.obtained()
 // x and y represent the center of the effect
 function fireEffect(x,y, duration, fill)
 {
+    let fireSquare = new mapTile(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2,mapTiles[mapTiles.length-1].tileNum)
+    fireSquare.setFill = fill
+    fireSquare.setStroke = "#FFFFFF"
+    drawables.push(fireSquare)
+    
     let interval = setInterval(() =>{
-        ctx.clearRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2)
-        drawRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2,"#FFFFFF",fill);}, 50);
+        //ctx.clearRect(x-squareSize/4,y-squareSize/4,squareSize/2,squareSize/2)
+        removeItemOnce(drawables,fireSquare);}, 100);
 
     setTimeout(function( ) { clearInterval( interval );}, duration);
-    
 }
 
 

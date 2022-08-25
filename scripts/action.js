@@ -59,7 +59,7 @@ class Action
     {
         this.actionNum = document.getElementById('actionList').innerHTML.split('<div').length
         document.getElementById('actionList').innerHTML += 
-        "<div id=\"" + this.actionNum + "\" class=\"action\"\">("+ this.actionNum + ") " + this.name + "</div>"
+        "<div id=\"" + this.actionNum + "\" class=\"action\"\"> <button id=\"" + this.name + "\" type=\"button\" onClick=\"selectAction(" + this.actionNum + ")\">("+ this.actionNum + ") " + this.name + "</button></div>"
         
         var list = document.getElementById("shop-list");
         var allItems = document.querySelectorAll("#shop-list li");

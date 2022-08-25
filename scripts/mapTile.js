@@ -10,9 +10,11 @@ class mapTile{
         this.tileNum = tileNum;
         let row = null
         let col = null
+        this.fill = "#F5EFED"
+        this.stroke = "#000000"
     }
     drawSelf() {
-        drawRect(this.x,this.y,this.width,this.height,"#000000","#F5EFED");    
+        drawRect(this.x,this.y,this.width,this.height,this.stroke,this.fill);    
     }
     get center(){
         return [(this.x + this.width/2),(this.y + this.height/2)]
@@ -32,6 +34,22 @@ class mapTile{
     set setCol(num)
     {
         this.col = num
+    }
+    get getFill()
+    {
+        return this.fill
+    }
+    set setFill(color)
+    {
+        this.fill = color
+    }
+    get getStroke()
+    {
+        return this.stroke
+    }
+    set setStroke(color)
+    {
+        this.stroke = color
     }
     occupied(){
         console.log(player1.center == this.center)
