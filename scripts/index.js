@@ -57,7 +57,7 @@ generateMap()
 let player1 = makeUnit("Player",squareSize * 1.5,squareSize*1.5,"#20A39E",100, true,["Ally","Player"],0)
 player1.currentHealth = 0
 
-let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9999")
+let rangeDisp = new rangeBall(player1.center[0],player1.center[1], 0,"#00FF9959")
 let aoeRange = new rangeBall(player1.center[0],player1.center[1], 0, "#400F0333")
 
 drawables.push(rangeDisp)
@@ -446,13 +446,27 @@ function selectAction(actionNum)
             if(actionArray[i].selected == true)
             {
                 actionArray[i].selected = false
-                changeRangeDisp(-1)
+                removeItemOnce(drawables,rangeDisp)
+                // changeRangeDisp(-1)
+                
             }else
             {
+                if(searchArray(drawables,rangeDisp) == null)
+                {
+                    drawables.push(rangeDisp)
+                }
                 actionArray[i].selected = true;
                 changeRangeDisp(actionArray[i].name)
             }
             // document.getElementById(actionArray[i].name).style.background = 'red'
+            if(!isAoe && searchArray(drawables,aoeRange) != null)
+            {
+                removeItemOnce(drawables,aoeRange)
+            }
+            else
+            {
+                drawables.push(aoeRange);
+            }
             highlight(document.getElementById(actionArray[i].name))
         }
         else
@@ -880,14 +894,12 @@ function highlight(element){
     }
 }
 function unHighlight(element){
-    // console.log(element)
     element.style.background = 'transparent'
 }
 function addAction(name, active, charges, range, price, aoe)
 {
     let newAction = new Action(name,active,charges,range,price, aoe)
     actionArray.push(newAction)
-    console.log(actionArray.length)
     addToShop(newAction, price)
 }
 function searchAction(name)
