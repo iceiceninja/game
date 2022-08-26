@@ -173,7 +173,7 @@ function makeSpawner(x,y,width,height,color, spawnerHealth,alive,effects)
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
-makeSpawner(getRandomInt(canvas.width/squareSize)*squareSize,getRandomInt(canvas.height/squareSize)*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
+makeSpawner(getRandomInt(canvas.width/squareSize)*squareSize-squareSize,getRandomInt(canvas.height/squareSize)*squareSize-squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
 //makeSpawner(30*squareSize,5*squareSize,squareSize,squareSize,"#BDBF09", 50, true,["Spawner"])
 function generateMap()
 {
@@ -438,6 +438,7 @@ function allyTurn()
 
 function selectAction(actionNum)
 {
+    // console.log(actionArray.length)
     for(let i = 0; i < actionArray.length; i++)
     {
         if(actionArray[i].actionNum == actionNum)
@@ -451,13 +452,41 @@ function selectAction(actionNum)
                 actionArray[i].selected = true;
                 changeRangeDisp(actionArray[i].name)
             }
+            // document.getElementById(actionArray[i].name).style.background = 'red'
             highlight(document.getElementById(actionArray[i].name))
-        }else
+        }
+        else
         {
-            actionArray[i].selected = false
-            unHighlight(document.getElementById(actionArray[i].name))
+            if(document.getElementById(actionArray[i].name) != null)
+            {
+                actionArray[i].selected = false
+                unHighlight(document.getElementById(actionArray[i].name))
+            }
         }
     }
+    // for(let i = 0; i < actionArray.length; i++)
+    // {
+    //     console.log(i,actionArray.length,i<actionArray.length);
+    //     // console.log(actionArray[i].actionNum,actionNum)
+    //     if(actionArray[i].actionNum == actionNum)
+    //     {
+    //         if(actionArray[i].selected == true)
+    //         {
+    //             actionArray[i].selected = false
+    //             changeRangeDisp(-1)
+    //         }else
+    //         {
+    //             actionArray[i].selected = true;
+    //             changeRangeDisp(actionArray[i].name)
+    //         }
+    //         highlight(document.getElementById(actionArray[i].name))
+    //     }else
+    //     {
+    //         actionArray[i].selected = false
+    //         // console.log(document.getElementById(actionArray[i].name));
+    //         unHighlight(document.getElementById(actionArray[i].name))
+    //     }
+    // }
     
 }
 
@@ -483,14 +512,17 @@ document.addEventListener("keyup", function(event)
             {
                 selectAction(actionArray[i].number)
                 changeRangeDisp(actionArray[i].name)
+                // highlight(document.getElementById(actionArray[i].name))
             }
         }
-        highlight(document.getElementById(event.key))
+        // highlight(document.getElementById(event.key))
+
     }
 });
 
 function changeRangeDisp(actionName)
 {
+    isAoe = false;
     switch (actionName)
     {
         case "Move":
@@ -848,12 +880,14 @@ function highlight(element){
     }
 }
 function unHighlight(element){
-        element.style.background = 'transparent'
+    // console.log(element)
+    element.style.background = 'transparent'
 }
 function addAction(name, active, charges, range, price, aoe)
 {
     let newAction = new Action(name,active,charges,range,price, aoe)
     actionArray.push(newAction)
+    console.log(actionArray.length)
     addToShop(newAction, price)
 }
 function searchAction(name)
